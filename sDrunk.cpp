@@ -1,5 +1,7 @@
 #include "sDrunk.hpp"
+#include <unistd.h>
 #include <cstdlib>
+#include <fstream>
 
 int playOrder;
 ostream *debug;
@@ -89,6 +91,11 @@ void SamuraiState::initSamuraiState(int a, int w)
            << " Done: " << done
            << " Hidden: " << hidden
            << " Recovery: " << recovery << endl;
+}
+
+bool SamuraiState::operator!=(const SamuraiState other) const
+{
+    return (homeX != other.homeX) || (homeY != other.homeY);
 }
 
 GameState::GameState()
@@ -217,6 +224,12 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
     }
 }
 
+//侍番号と命令をもらいそのとうり動かしてみる
+void GameState::moveSamurai(int wepon, int action)
+{
+    //do nothing
+}
+
 //メイン関数
 int main(int argc, char *argv[])
 {
@@ -227,7 +240,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        debug = new ofstream("/dev/null");
+        //debug = new ofstream("/dev/null");
+        debug = new ofstream("dev");
     }
     //初期情報取得
     playOrder = getInt();
@@ -240,7 +254,7 @@ int main(int argc, char *argv[])
     {
         gState.readTurnInfo();
         //player->play(info);
-        cout << cnt % 3 << 9 << 0 << endl;
+        cout << cnt % 3 << " " << 9 << " " << 0 << endl;
         ++cnt;
     }
 }

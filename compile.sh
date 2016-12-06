@@ -3,4 +3,4 @@
 # -include sDrunk:.o=.d
 # g++ -std=c++11 -g -Wall sDrunk.o
 
-g++ -std=c++11 -Wall -arch x86_64 -o sDrunk sDrunk.cpp
+g++ -std=c++11 -g -Wall -o sDrunk sDrunk.cpp

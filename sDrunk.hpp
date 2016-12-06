@@ -4,7 +4,7 @@
  */
 
 #include <iostream>
-#include <fstream>
+//#include <fstream>
 #include <cstring>
 #include <list>
 
@@ -34,10 +34,7 @@ struct SamuraiState {
   void initSamuraiState(int a, int w);
   //bool isValidAction(const int action) const;
 
-  bool operator!=(const SamuraiState other) const
-  {
-    return (homeX != other.homeX) || (homeY != other.homeY);
-  }
+  bool operator!=(const SamuraiState other) const;
 };
 
 //extern SamuraiState samuraiStates[2][3];
