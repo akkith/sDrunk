@@ -96,7 +96,9 @@ class GameState
     //侍番号と命令番号で行動可能か否かを返す
     bool isValidAction(int team, int wepon, int action) const;
     //侍番号と命令をもらいそのとうり動かしてみる
-    void moveSamurai(int wepon, int action);
+    void moveSamurai(int team, int wepon, int action);
+    //よく使いそうなので攻撃は別にしておく
+    void attackSamurai(SamuraiState * samurai, int action);
 };
 
 // struct Player {

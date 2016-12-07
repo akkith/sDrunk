@@ -32,6 +32,10 @@ int getInt()
     return v;
 }
 
+//移動(1、南　２、東　３、北　４、南)
+static int dx[] = {0, 0, 1, 0, -1};
+static int dy[] = {0, 1, 0, -1, 0};
+
 //拠点座標
 static const int homes[2][3][2] = {
     {{0, 0}, {0, 7}, {7, 0}},
@@ -225,13 +229,84 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
 }
 
 //侍番号と命令をもらいそのとうり動かしてみる
-void GameState::moveSamurai(int wepon, int action)
+void GameState::moveSamurai(int team, int wepon, int action)
 {
-    //do nothing
+    if (!isValidAction(team, wepon, action))
+    {
+        return;
+    }
+    //行動対象の侍
+    SamuraiState *samurai = &samuraiStates[team][wepon];
+    switch (action)
+    {
+    case 0:
+    //ターン経過
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        //攻撃
+        attackSamurai(samurai, action);
+        break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        //移動
+        samurai->x += dx[action];
+        samurai->y += dy[action];
+        break;
+    case 9:
+        //潜伏
+        samurai->hidden = samurai->hidden == 0 ? 1 : 0;
+        break;
+    default:
+        break;
+    }
 }
 
-//メイン関数
-int main(int argc, char *argv[])
+//攻撃のシミュレーション
+void GameState::attackSamurai(SamuraiState *samurai, int action)
+{
+    //侍の座標
+    int samuraiX,samuraiY;
+    samuraiX = samurai->x;
+    samuraiY = samurai->y;
+    //武器に合わせた攻撃マス数
+    int attackSize = osize[samurai->weapon];
+    for (int i = 0; i < attackSize; ++i)
+    {
+        int attackX, attackY;
+        //向きに合わせた座標に変換
+        rotate(action-1, ox[samurai->weapon][i], oy[samurai->weapon][i], attackX, attackY);
+        attackX += samuraiX;
+        attackY += samuraiY;
+        //攻撃座標が拠点でない場合
+        bool isHome = false;
+        for(int team = 0; team < 2; ++team)
+        {
+            for(int weapon = 0; weapon < 3; ++weapon)
+            {
+                if(attackX == homes[team][weapon][0]
+                && attackY == homes[team][weapon][1] )
+                {
+                    isHome |= true;
+                }
+            }
+        }
+
+        if( 0 <= attackX && attackX <= stageWidth
+         && 0 <= attackY && attackY <= stageHeight
+         && !isHome )
+        {
+            field[attackX][attackY] = samurai->weapon;
+        }
+    }
+
+}
+
+    //メイン関数
+    int main(int argc, char *argv[])
 {
     //デバッグ用出力ファイル設定
     if (argc == 2 && strcmp(argv[1], "-d") == 0)
@@ -240,8 +315,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //debug = new ofstream("/dev/null");
-        debug = new ofstream("dev");
+        debug = new ofstream("./dev/log");
+        //debug = new ofstream("dev");
     }
     //初期情報取得
     playOrder = getInt();
