@@ -33,7 +33,8 @@ struct SamuraiState {
   int recovery;
   void initSamuraiState(int a, int w);
   //bool isValidAction(const int action) const;
-
+  void dead();
+  //比較用
   bool operator!=(const SamuraiState other) const;
 };
 
@@ -70,7 +71,10 @@ struct SamuraiState {
 // 		 int& territory, int& injury, int& hiding);
 // };
 
-//ゲーム状況
+/* ゲーム状況
+ * 侍と地図を一括して保持する方
+ *　どんどん大きくなっている、やばい。
+ */
 class GameState
 {
     private:
@@ -93,6 +97,8 @@ class GameState
     //ゲーム終了判定
     bool isGameOver();
 
+    //ターンの更新
+    void turnUpdate();
     //侍番号と命令番号で行動可能か否かを返す
     bool isValidAction(int team, int wepon, int action) const;
     //侍番号と命令をもらいそのとうり動かしてみる

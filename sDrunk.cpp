@@ -97,6 +97,14 @@ void SamuraiState::initSamuraiState(int a, int w)
            << " Recovery: " << recovery << endl;
 }
 
+//侍の攻撃被弾時の挙動
+void SamuraiState::dead()
+{
+    x = homeX;
+    y = homeY;
+    recovery = recoveryTurns;
+}
+
 bool SamuraiState::operator!=(const SamuraiState other) const
 {
     return (homeX != other.homeX) || (homeY != other.homeY);
@@ -138,6 +146,24 @@ void GameState::readTurnInfo()
 bool GameState::isGameOver()
 {
     return turn >= 96;
+}
+
+//ターンの更新シミュレーション
+void GameState::turnUpdate()
+{
+    //ターンのカウントを増やす
+    ++turn;
+    //治療のカウントを減らす
+    for(int i = 0; i < 2; ++i)
+    {
+        for(SamuraiState &ss : samuraiStates[i])
+        {
+            if(ss.recovery > 0)
+            {
+                --ss.recovery;
+            }
+        }
+    }
 }
 
 //行動可能か否か
@@ -240,7 +266,8 @@ void GameState::moveSamurai(int team, int wepon, int action)
     switch (action)
     {
     case 0:
-    //ターン経過
+        //ターン経過
+        turnUpdate();
     case 1:
     case 2:
     case 3:
@@ -283,15 +310,38 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
         attackY += samuraiY;
         //攻撃座標が拠点でない場合
         bool isHome = false;
+        //攻撃座標に敵がいた
+        //bool onEnemy = false;
         for(int team = 0; team < 2; ++team)
         {
             for(int weapon = 0; weapon < 3; ++weapon)
             {
-                if(attackX == homes[team][weapon][0]
-                && attackY == homes[team][weapon][1] )
-                {
-                    isHome |= true;
+                SamuraiState &ss = samuraiStates[team][weapon];
+                if(team == 1){
+                    if( attackX == ss.homeX && attackY == ss.homeY )
+                    {
+                        isHome |= true;
+                    }
+                    if( attackX == ss.x && attackY == ss.homeY )
+                    {
+                        //onEnemy |= true;
+                        ss.dead();
+                    }
                 }
+                
+                // もしかしたらこっちかも
+                // SamuraiState *ss = &samuraiStates[team][weapon];
+                // if(team == 1){
+                //     if( attackX == ss->homeX && attackY == ss->homeY )
+                //     {
+                //         isHome |= true;
+                //     }
+                //     if( attackX == ss->x && attackY == ss->homeY )
+                //     {
+                //         //onEnemy |= true;
+                //         ss->dead();
+                //     }
+                // }
             }
         }
 
