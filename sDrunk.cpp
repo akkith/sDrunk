@@ -154,11 +154,11 @@ void GameState::turnUpdate()
     //ターンのカウントを増やす
     ++turn;
     //治療のカウントを減らす
-    for(int i = 0; i < 2; ++i)
+    for (int i = 0; i < 2; ++i)
     {
-        for(SamuraiState &ss : samuraiStates[i])
+        for (SamuraiState &ss : samuraiStates[i])
         {
-            if(ss.recovery > 0)
+            if (ss.recovery > 0)
             {
                 --ss.recovery;
             }
@@ -296,7 +296,7 @@ void GameState::moveSamurai(int team, int wepon, int action)
 void GameState::attackSamurai(SamuraiState *samurai, int action)
 {
     //侍の座標
-    int samuraiX,samuraiY;
+    int samuraiX, samuraiY;
     samuraiX = samurai->x;
     samuraiY = samurai->y;
     //武器に合わせた攻撃マス数
@@ -305,30 +305,31 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
     {
         int attackX, attackY;
         //向きに合わせた座標に変換
-        rotate(action-1, ox[samurai->weapon][i], oy[samurai->weapon][i], attackX, attackY);
+        rotate(action - 1, ox[samurai->weapon][i], oy[samurai->weapon][i], attackX, attackY);
         attackX += samuraiX;
         attackY += samuraiY;
         //攻撃座標が拠点でない場合
         bool isHome = false;
         //攻撃座標に敵がいた
         //bool onEnemy = false;
-        for(int team = 0; team < 2; ++team)
+        for (int team = 0; team < 2; ++team)
         {
-            for(int weapon = 0; weapon < 3; ++weapon)
+            for (int weapon = 0; weapon < 3; ++weapon)
             {
                 SamuraiState &ss = samuraiStates[team][weapon];
-                if(team == 1){
-                    if( attackX == ss.homeX && attackY == ss.homeY )
+                if (team == 1)
+                {
+                    if (attackX == ss.homeX && attackY == ss.homeY)
                     {
                         isHome |= true;
                     }
-                    if( attackX == ss.x && attackY == ss.homeY )
+                    if (attackX == ss.x && attackY == ss.homeY)
                     {
                         //onEnemy |= true;
                         ss.dead();
                     }
                 }
-                
+
                 // もしかしたらこっちかも
                 // SamuraiState *ss = &samuraiStates[team][weapon];
                 // if(team == 1){
@@ -345,18 +346,15 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
             }
         }
 
-        if( 0 <= attackX && attackX <= stageWidth
-         && 0 <= attackY && attackY <= stageHeight
-         && !isHome )
+        if (0 <= attackX && attackX <= stageWidth && 0 <= attackY && attackY <= stageHeight && !isHome)
         {
             field[attackX][attackY] = samurai->weapon;
         }
     }
-
 }
 
-    //メイン関数
-    int main(int argc, char *argv[])
+//メイン関数
+int main(int argc, char *argv[])
 {
     //デバッグ用出力ファイル設定
     if (argc == 2 && strcmp(argv[1], "-d") == 0)
@@ -379,7 +377,8 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
     {
         gState.readTurnInfo();
         //player->play(info);
-        cout << cnt % 3 << " " << 9 << " " << 0 << endl;
-        ++cnt;
+        return getCommand( gState );
+        //cout << cnt % 3 << " " << 9 << " " << 0 << endl;
+        //++cnt;
     }
 }
