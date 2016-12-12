@@ -8,6 +8,8 @@
 #include <queue>
 #include <algorithm>
 
+//ostream *debug;
+
 //命令番号を入れるとコストを返してくれる
 int costs[] = {0,4,4,4,4,2,2,2,2,1};
 
@@ -26,6 +28,7 @@ class GameSearch
     bool checkCost(int n);
     bool checkAction(int team, int samurai, int n);
     GameSearch doAction(int team, int samurai, int n);
+    void addCost(int n);
     void addCommand(int n);
 };
 
@@ -69,8 +72,14 @@ GameSearch GameSearch::doAction(int team, int weapon, int n)
     nextState.moveSamurai(team, weapon, n);
     double sc = evaluate(&nextState);
     GameSearch nextSerch( &nextState, sc );
+    nextSerch.addCost(n);
     nextSerch.addCommand(n);
     return nextSerch;
+}
+
+void GameSearch::addCost(int n)
+{
+    cost += costs[n];
 }
 
 void GameSearch::addCommand(int n)
@@ -97,6 +106,9 @@ string getCommand(GameState *gs)
         GameSearch gSearch = states.front();
         lookedStates.push_back( gSearch );
         states.pop();
+        *debug << "point "
+               << gSearch.getScore() << endl;
+
         for(int weapon = 0; weapon < 3; ++weapon)
         {
             for(int n = 1; n <= 9; ++n)
