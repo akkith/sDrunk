@@ -70,11 +70,17 @@ double evaluate(GameState *gs)
     //マップに関する得点
     int field[stageWidth][stageHeight];
     gs->getField(field);
-    totalScore += evaluateStage(field);
+    double stageScore = evaluateStage(field);
+    totalScore += stageScore;
     //侍に関する得点
     SamuraiState ss[2][3];
     gs->getSamuraiStates(ss);
-    totalScore += evaluateSamuraiState(ss);
+    double samuraiScore = evaluateSamuraiState(ss);
+    totalScore += samuraiScore;
+    *debug << "field" << endl;
+    gs->showField();
+    *debug << "Stage Score : " <<  stageScore
+           << "Samurai Score : " << samuraiScore << endl << endl;
 
     return totalScore;
 }

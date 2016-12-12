@@ -106,12 +106,10 @@ string getCommand(GameState *gs)
         GameSearch gSearch = states.front();
         lookedStates.push_back( gSearch );
         states.pop();
-        *debug << "point "
-               << gSearch.getScore() << endl;
 
         for(int weapon = 0; weapon < 3; ++weapon)
         {
-            for(int n = 1; n <= 9; ++n)
+            for(int n = 1; n <= 8; ++n)
             {
                 if( gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n) )
                 {
@@ -131,5 +129,4 @@ string getCommand(GameState *gs)
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
 
     return lookedStates.at(0).getCommand();
-
 }

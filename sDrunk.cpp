@@ -364,6 +364,19 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
     }
 }
 
+//デバッグ用：フィールド表示
+void GameState::showField()
+{
+    for(int x = 0; x < stageWidth; ++x)
+    {
+        for(int y = 0; y < stageHeight; ++ y)
+        {
+            *debug << field[x][y];
+        }
+        *debug << endl;
+    }
+}
+
 //メイン関数
 int main(int argc, char *argv[])
 {
@@ -389,6 +402,7 @@ int main(int argc, char *argv[])
         gState.readTurnInfo();
         //player->play(info);
         string command = getCommand( &gState );
+        *debug << "command : " << command << endl;
         cout << command;
         //cout << cnt % 3 << " " << 9 << " " << 0 << endl;
         //++cnt;

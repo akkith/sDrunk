@@ -109,6 +109,9 @@ class GameState
     void moveSamurai(int team, int wepon, int action);
     //よく使いそうなので攻撃は別にしておく
     void attackSamurai(SamuraiState * samurai, int action);
+
+    //デバッグ用：フィールド表示
+    void showField();
 };
 
 //現在のゲーム状況を渡してコマンドを返す関数
