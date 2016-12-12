@@ -110,6 +110,8 @@ class GameState
     //よく使いそうなので攻撃は別にしておく
     void attackSamurai(SamuraiState * samurai, int action);
 
+    //デバッグ用：侍表示
+    void showSamurai();
     //デバッグ用：フィールド表示
     void showField();
 };

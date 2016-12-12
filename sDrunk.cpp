@@ -145,12 +145,24 @@ void GameState::readTurnInfo()
 //ステージ情報をもらう
 void GameState::getField(int(*f)[stageHeight])
 {
-    f = field;
+    for(int x = 0; x < stageWidth; ++x)
+    {
+        for(int y = 0; y < stageHeight; ++y)
+        {
+            f[x][y] = field[x][y];
+        }
+    }
 }
 //侍の情報をもらう
 void GameState::getSamuraiStates(SamuraiState(*ss)[3])
 {
-    ss = samuraiStates;
+    for(int team = 0; team < 2; ++team)
+    {
+        for(int weapon = 0; weapon < 3; ++weapon)
+        {
+            ss[team][weapon] = samuraiStates[team][weapon];
+        }
+    }
 }
 
 //ゲーム終了か否か
@@ -361,6 +373,30 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
         {
             field[attackX][attackY] = samurai->weapon;
         }
+    }
+}
+
+//デバッグ用：侍表示
+void GameState::showSamurai()
+{
+    for(int team = 0; team < 2; ++team)
+    {
+        if(team == 0)
+        {
+            *debug << "My Team" << endl;
+        }
+        else
+        {
+            *debug << "Enemy Team" << endl;
+        }
+
+        for(int weapon = 0; weapon < 3; ++weapon)
+        {
+            SamuraiState samurai = samuraiStates[team][weapon];
+            *debug << "weapon : " << samurai.weapon << " x : " << samurai.x << ", y : " << samurai.y
+                   << " hidden : " << samurai.hidden << " recovery : " << samurai.recovery << endl;
+        }
+        *debug << endl;
     }
 }
 

@@ -6,9 +6,9 @@
 
 #include "sDrunk.hpp"
 
-double territoryPoint = 1.0;
-double koPoint = 1.0;
-double hiddenPoint = 1.0;
+double territoryPoint = 1;
+double koPoint = 1;
+double hiddenPoint = 1;
 
 //マップの点数計算
 double evaluateStage(int field[stageWidth][stageHeight])
@@ -21,7 +21,7 @@ double evaluateStage(int field[stageWidth][stageHeight])
             int num = field[x][y];
             if(num < 3)
             {
-                score += 1 * territoryPoint;
+                score += (1 * territoryPoint);
             }
             else if(num < 6)
             {
@@ -49,13 +49,13 @@ double evaluateSamuraiState(SamuraiState samuraiStates[2][3])
             //やられている状態を治療ターンの有無で調べる
             if(ss.recovery > 0)
             {
-                double p = 1.0 * koPoint;
-                score += team == 0 ? -1 * p : p;
+                double p = 1 * koPoint;
+                score += team == 0 ? (-1 * p) : p;
             }
             if(ss.hidden != 0)
             {
-                double p = 1.0 * hiddenPoint;
-                score += team == 0 ? -1 * p : p;  
+                double p = 1 * hiddenPoint;
+                score += (team == 0) ? 0 : p;  
             }
         }
     }
@@ -77,10 +77,10 @@ double evaluate(GameState *gs)
     gs->getSamuraiStates(ss);
     double samuraiScore = evaluateSamuraiState(ss);
     totalScore += samuraiScore;
-    *debug << "field" << endl;
+    gs->showSamurai();
     gs->showField();
     *debug << "Stage Score : " <<  stageScore
-           << "Samurai Score : " << samuraiScore << endl << endl;
+           << " Samurai Score : " << samuraiScore << endl << endl;
 
     return totalScore;
 }

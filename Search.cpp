@@ -113,6 +113,7 @@ string getCommand(GameState *gs)
             {
                 if( gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n) )
                 {
+                    *debug << "weapon : " << weapon << " action : " << n << endl;
                     GameSearch newGSerch = gSearch.doAction(0, weapon, n);
                     lookedStates.push_back(newGSerch);
                     states.push(newGSerch);
