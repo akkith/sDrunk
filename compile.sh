@@ -1,8 +1,6 @@
-# g++ -c -Wall -std=c++11 -o sDrunk.o sDrunk.cpp
-# g++ -MM -Wall -std=c++11 sDrunk.cpp > sDrunk.d
-# -include sDrunk:.o=.d
-# g++ -std=c++11 -g -Wall sDrunk.o
+g++ -c -std=c++11 -Wall -o Search.o Search.cpp
+g++ -c -std=c++11 -Wall -o Evaluate.o Evaluate.cpp
+#g++ -std=c++11 -g -Wall -o sDrunk sDrunk.cpp
+g++ -c -std=c++11 -Wall -o sDrunk.o sDrunk.cpp
 
-g++ -c -Wall -o Serch.o Serch.cpp
-G++ -c -Wall -o Evalute.o Evalute.cpp
-g++ -std=c++11 -g -Wall -o sDrunk sDrunk.cpp
+gcc -std=c++11 -Wall -o sDrunk Search.o Evaluate.o sDrunk.o

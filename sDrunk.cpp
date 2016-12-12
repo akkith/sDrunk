@@ -142,6 +142,17 @@ void GameState::readTurnInfo()
     }
 }
 
+//ステージ情報をもらう
+void GameState::getField(int(*f)[stageHeight])
+{
+    f = field;
+}
+//侍の情報をもらう
+void GameState::getSamuraiStates(SamuraiState(*ss)[3])
+{
+    ss = samuraiStates;
+}
+
 //ゲーム終了か否か
 bool GameState::isGameOver()
 {
@@ -372,12 +383,13 @@ int main(int argc, char *argv[])
     //ゲーム情報保持
     GameState gState;
     //メインループ= 0;
-    int cnt = 0;
+    //int cnt = 0;
     while (!gState.isGameOver())
     {
         gState.readTurnInfo();
         //player->play(info);
-        return getCommand( gState );
+        string command = getCommand( &gState );
+        cout << command;
         //cout << cnt % 3 << " " << 9 << " " << 0 << endl;
         //++cnt;
     }

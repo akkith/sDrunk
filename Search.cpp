@@ -6,11 +6,12 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <algorithm>
 
 //命令番号を入れるとコストを返してくれる
-int costs[] = {0,4,4,4,4,2,2,2,2,1}
+int costs[] = {0,4,4,4,4,2,2,2,2,1};
 
-class GameSerch
+class GameSearch
 {
     private:
     double score;
@@ -19,21 +20,21 @@ class GameSerch
     int cost;
 
     public:
-    GameSerch(GameState *gamestate, double sc);
+    GameSearch(GameState *gamestate, double sc);
     double getScore();
     string getCommand();
     bool checkCost(int n);
-    bool checkAction(int samurai, int n);
-    GameSerch doAction(int samurai, int n);
+    bool checkAction(int team, int samurai, int n);
+    GameSearch doAction(int team, int samurai, int n);
     void addCommand(int n);
 };
 
-bool compGameSerch(GameSerch a, GameSerch b)
+bool compGameSearch(GameSearch a, GameSearch b)
 {
     return a.getScore() > b.getScore();
 }
 
-GameSerch::GameSerch(GameState *gamestate, double sc)
+GameSearch::GameSearch(GameState *gamestate, double sc)
 {
     gs = gamestate;
     score = sc;
@@ -41,36 +42,38 @@ GameSerch::GameSerch(GameState *gamestate, double sc)
     cost = 0;
 }
 
-GameSerch::getScore()
+double GameSearch::getScore()
 {
     return score;
 }
 
-GameSerch::getCommand()
+string GameSearch::getCommand()
 {
     return command + " 0";
 }
 
-GameSerch::checkCost(int n)
+bool GameSearch::checkCost(int n)
 {
     return cost + costs[n] <= 7; 
 }
 
-bool checkAction(int team, int weapon, int n)
+bool GameSearch::checkAction(int team, int weapon, int n)
 {
-    return gs->isValidAction(team, weapon, n);
+    bool isValid = gs->isValidAction(team, weapon, n);
+    return isValid;
 }
 
-GameSerch doAction(int team, int weapon, int n)
+GameSearch GameSearch::doAction(int team, int weapon, int n)
 {
     GameState nextState = *gs;
     nextState.moveSamurai(team, weapon, n);
-    GameSerch nextSerch( nextState, evaluate(nextState) );
+    double sc = evaluate(&nextState);
+    GameSearch nextSerch( &nextState, sc );
     nextSerch.addCommand(n);
     return nextSerch;
 }
 
-GameSerch::addCommand(int n)
+void GameSearch::addCommand(int n)
 {
     cost += costs[n];
     if(command != "")
@@ -83,23 +86,24 @@ GameSerch::addCommand(int n)
 string getCommand(GameState *gs)
 {
     string result;
-    vector<GameSerch> lookedStates;
-    queue<GameSerch> states;
-    GameSerch firstState(gs, evalute(gs) );
+    vector<GameSearch> lookedStates;
+    queue<GameSearch> states;
+    double sc = evaluate(gs);
+    GameSearch firstState(gs, sc );
     states.push(firstState);
 
     while( !states.empty() )
     {
-        GameSerch gSerch = states.front();
-        lookedStates.push_back( gSerch );
+        GameSearch gSearch = states.front();
+        lookedStates.push_back( gSearch );
         states.pop();
-        for(int weapon = 0; weapon < 3; +weapon)
+        for(int weapon = 0; weapon < 3; ++weapon)
         {
             for(int n = 1; n <= 9; ++n)
             {
-                if( gSerch.checkCost(n) && gState.checkAction(n) )
+                if( gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n) )
                 {
-                    GameSerch newGSerch = gSerch.doAction();
+                    GameSearch newGSerch = gSearch.doAction(0, weapon, n);
                     lookedStates.push_back(newGSerch);
                     states.push(newGSerch);
                 }
@@ -112,8 +116,8 @@ string getCommand(GameState *gs)
         return "0";
     }
 
-    sort(lookedStates.begin(), lookedStates.end(), compGameSerch);
+    sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
 
-    return lookedStates.get(0).getCommand();
+    return lookedStates.at(0).getCommand();
 
 }

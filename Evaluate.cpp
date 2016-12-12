@@ -11,7 +11,7 @@ double koPoint = 1.0;
 double hiddenPoint = 1.0;
 
 //マップの点数計算
-double evaluteStage(int field[stageWidth][stageHeight])
+double evaluateStage(int field[stageWidth][stageHeight])
 {
     int score = 0;
     for(int x = 0; x < stageWidth; ++x)
@@ -38,7 +38,7 @@ double evaluteStage(int field[stageWidth][stageHeight])
 }
 
 //敵を倒した時の得点
-double evaluteSamuraiState(SamuraiState samuraiStates[2][3]) const
+double evaluateSamuraiState(SamuraiState samuraiStates[2][3])
 {
     double score = 0;
     for(int team = 0; team < 2; ++team)
@@ -55,7 +55,7 @@ double evaluteSamuraiState(SamuraiState samuraiStates[2][3]) const
             if(ss.hidden != 0)
             {
                 double p = 1.0 * hiddenPoint;
-                score += team == 0 ? -1 * p :    
+                score += team == 0 ? -1 * p : p;  
             }
         }
     }
@@ -68,9 +68,13 @@ double evaluate(GameState *gs)
     //合計得点
     double totalScore = 0;
     //マップに関する得点
-    totalScore += evaluteStage(gs->field);
+    int field[stageWidth][stageHeight];
+    gs->getField(field);
+    totalScore += evaluateStage(field);
     //侍に関する得点
-    totalScore += evaluteSamuraiState(gs->samuraiStates);
+    SamuraiState ss[2][3];
+    gs->getSamuraiStates(ss);
+    totalScore += evaluateSamuraiState(ss);
 
     return totalScore;
 }

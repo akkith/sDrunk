@@ -90,6 +90,10 @@ class GameState
     GameState();
     //標準入力からのゲーム情報を取得
     void readTurnInfo();
+    //ステージ情報をもらう
+    void getField(int(*f)[stageHeight]);
+    //侍の情報をもらう
+    void getSamuraiStates(SamuraiState(*ss)[3]);
     //侍情報更新
     //void setSamuraiState(int team, int no, SamuraiState *samuraiState);
     //フィールド更新
@@ -106,6 +110,11 @@ class GameState
     //よく使いそうなので攻撃は別にしておく
     void attackSamurai(SamuraiState * samurai, int action);
 };
+
+//現在のゲーム状況を渡してコマンドを返す関数
+string getCommand(GameState *gs);
+//ゲーム状況をもらってその時の評価を返す
+double evaluate(GameState *gs);
 
 // struct Player {
 //   virtual void play(GameInfo& info) = 0;
