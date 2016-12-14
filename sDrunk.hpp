@@ -88,6 +88,8 @@ class GameState
     public:
     //コンストラクタ
     GameState();
+    //コピーコンストラクタ
+    GameState(const GameState &gs);
     //標準入力からのゲーム情報を取得
     void readTurnInfo();
     //ステージ情報をもらう
@@ -109,6 +111,27 @@ class GameState
     void moveSamurai(int team, int wepon, int action);
     //よく使いそうなので攻撃は別にしておく
     void attackSamurai(SamuraiState * samurai, int action);
+
+    GameState &operator=(const GameState &gs)
+    {
+      turn = gs.turn;
+      for(int team = 0; team < 2; ++team)
+      {
+        for(int weapon = 0; weapon < 3; ++weapon)
+        {
+          samuraiStates[team][weapon] = gs.samuraiStates[team][weapon];
+        }
+      }
+      for(int x = 0; x < stageWidth; ++x)
+      {
+        for(int y = 0; y < stageHeight; ++y)
+        {
+          field[x][y] = gs.field[x][y];
+        }
+      }
+
+      return *this;
+    }
 
     //デバッグ用：侍表示
     void showSamurai();

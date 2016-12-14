@@ -115,6 +115,26 @@ GameState::GameState()
     //isGameOver = false;
 }
 
+GameState::GameState(const GameState &gs)
+{
+    turn = gs.turn;
+    for (int team = 0; team < 2; ++team)
+    {
+        for (int weapon = 0; weapon < 3; ++weapon)
+        {
+            samuraiStates[team][weapon] = gs.samuraiStates[team][weapon];
+        }
+    }
+
+    for (int x = 0; x < stageWidth; ++x)
+    {
+        for (int y = 0; y < stageHeight; ++y)
+        {
+            field[x][y] = gs.field[x][y];
+        }
+    }
+}
+
 //標準入力からゲーム情報を取得
 void GameState::readTurnInfo()
 {
@@ -143,22 +163,23 @@ void GameState::readTurnInfo()
 }
 
 //ステージ情報をもらう
-void GameState::getField(int(*f)[stageHeight])
+void GameState::getField(int (*f)[stageHeight])
 {
-    for(int x = 0; x < stageWidth; ++x)
+    for (int x = 0; x < stageWidth; ++x)
     {
-        for(int y = 0; y < stageHeight; ++y)
+        for (int y = 0; y < stageHeight; ++y)
         {
             f[x][y] = field[x][y];
         }
     }
 }
+
 //侍の情報をもらう
-void GameState::getSamuraiStates(SamuraiState(*ss)[3])
+void GameState::getSamuraiStates(SamuraiState (*ss)[3])
 {
-    for(int team = 0; team < 2; ++team)
+    for (int team = 0; team < 2; ++team)
     {
-        for(int weapon = 0; weapon < 3; ++weapon)
+        for (int weapon = 0; weapon < 3; ++weapon)
         {
             ss[team][weapon] = samuraiStates[team][weapon];
         }
@@ -303,8 +324,8 @@ void GameState::moveSamurai(int team, int wepon, int action)
     case 7:
     case 8:
         //移動
-        samurai->x += dx[action-4];
-        samurai->y += dy[action-4];
+        samurai->x += dx[action - 4];
+        samurai->y += dy[action - 4];
         break;
     case 9:
         //潜伏
@@ -365,9 +386,9 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
 //デバッグ用：侍表示
 void GameState::showSamurai()
 {
-    for(int team = 0; team < 2; ++team)
+    for (int team = 0; team < 2; ++team)
     {
-        if(team == 0)
+        if (team == 0)
         {
             *debug << "My Team" << endl;
         }
@@ -376,7 +397,7 @@ void GameState::showSamurai()
             *debug << "Enemy Team" << endl;
         }
 
-        for(int weapon = 0; weapon < 3; ++weapon)
+        for (int weapon = 0; weapon < 3; ++weapon)
         {
             SamuraiState samurai = samuraiStates[team][weapon];
             *debug << "weapon : " << samurai.weapon << " x : " << samurai.x << ", y : " << samurai.y
@@ -389,9 +410,9 @@ void GameState::showSamurai()
 //デバッグ用：フィールド表示
 void GameState::showField()
 {
-    for(int y = 0; y < stageHeight; ++y)
+    for (int y = 0; y < stageHeight; ++y)
     {
-        for(int x = 0; x < stageWidth; ++ x)
+        for (int x = 0; x < stageWidth; ++x)
         {
             *debug << field[x][y];
         }
@@ -423,7 +444,7 @@ int main(int argc, char *argv[])
     {
         gState.readTurnInfo();
         //player->play(info);
-        string command = getCommand( &gState );
+        string command = getCommand(&gState);
         *debug << "command : " << command << endl;
         cout << command;
         //cout << cnt % 3 << " " << 9 << " " << 0 << endl;
