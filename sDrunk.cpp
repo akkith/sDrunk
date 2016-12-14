@@ -32,7 +32,7 @@ int getInt()
     return v;
 }
 
-//移動(1、南　２、東　３、北　４、南)
+//移動(1、南　２、東　３、北　４、西)
 static int dx[] = {0, 0, 1, 0, -1};
 static int dy[] = {0, 1, 0, -1, 0};
 
@@ -303,8 +303,8 @@ void GameState::moveSamurai(int team, int wepon, int action)
     case 7:
     case 8:
         //移動
-        samurai->x += dx[action];
-        samurai->y += dy[action];
+        samurai->x += dx[action-4];
+        samurai->y += dy[action-4];
         break;
     case 9:
         //潜伏
@@ -352,20 +352,6 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
                         ss.dead();
                     }
                 }
-
-                // もしかしたらこっちかも
-                // SamuraiState *ss = &samuraiStates[team][weapon];
-                // if(team == 1){
-                //     if( attackX == ss->homeX && attackY == ss->homeY )
-                //     {
-                //         isHome |= true;
-                //     }
-                //     if( attackX == ss->x && attackY == ss->homeY )
-                //     {
-                //         //onEnemy |= true;
-                //         ss->dead();
-                //     }
-                // }
             }
         }
 
@@ -403,9 +389,9 @@ void GameState::showSamurai()
 //デバッグ用：フィールド表示
 void GameState::showField()
 {
-    for(int x = 0; x < stageWidth; ++x)
+    for(int y = 0; y < stageHeight; ++y)
     {
-        for(int y = 0; y < stageHeight; ++ y)
+        for(int x = 0; x < stageWidth; ++ x)
         {
             *debug << field[x][y];
         }
