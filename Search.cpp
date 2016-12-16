@@ -11,21 +11,24 @@
 //ostream *debug;
 
 //命令番号を入れるとコストを返してくれる
-int costs[] = {0,4,4,4,4,2,2,2,2,1};
+int costs[] = {0, 4, 4, 4, 4, 2, 2, 2, 2, 1};
 
 class GameSearch
 {
-    private:
+  private:
     double score;
     GameState gs;
     string command;
     int cost;
 
-    public:
+  public:
     GameSearch(GameState *gamestate, double sc);
     GameSearch(const GameSearch &gs);
+    void setScore(double sc);
     double getScore();
+    void setCommand(string cmd);
     string getCommand();
+    void setCost(int n);
     bool checkCost(int n);
     bool checkAction(int team, int samurai, int n);
     GameSearch doAction(int team, int samurai, int n);
@@ -34,16 +37,17 @@ class GameSearch
 
     GameSearch &operator=(const GameSearch &gSearch)
     {
-      score = gSearch.score;
-      gs = gSearch.gs;
-      command = gSearch.command;
-      cost = gSearch.cost;
+        score = gSearch.score;
+        gs = gSearch.gs;
+        command = gSearch.command;
+        cost = gSearch.cost;
 
-      return *this;
+        return *this;
     }
-    
+
     //デバッグ用
     void debugStage();
+    void showCommand();
 };
 
 bool compGameSearch(GameSearch a, GameSearch b)
@@ -67,9 +71,19 @@ GameSearch::GameSearch(const GameSearch &gSearch)
     cost = gSearch.cost;
 }
 
+void GameSearch::setScore(double sc)
+{
+    score = sc;
+}
+
 double GameSearch::getScore()
 {
     return score;
+}
+
+void GameSearch::setCommand(string cmd)
+{
+    command = cmd;
 }
 
 string GameSearch::getCommand()
@@ -77,9 +91,14 @@ string GameSearch::getCommand()
     return command + " 0";
 }
 
+void GameSearch::setCost(int n)
+{
+    cost = n;
+}
+
 bool GameSearch::checkCost(int n)
 {
-    return cost + costs[n] <= 7; 
+    return cost + costs[n] <= 7;
 }
 
 bool GameSearch::checkAction(int team, int weapon, int n)
@@ -90,14 +109,12 @@ bool GameSearch::checkAction(int team, int weapon, int n)
 
 GameSearch GameSearch::doAction(int team, int weapon, int n)
 {
-    GameState nextState = gs;
-    nextState.moveSamurai(team, weapon, n);
-    double sc = evaluate(&nextState);
-    GameSearch nextSearch( &nextState, sc );
+    GameSearch nextSearch = *this;
+    nextSearch.gs.moveSamurai(team, weapon, n);
+    double sc = evaluate(&(nextSearch.gs));
+    nextSearch.setScore(sc);
     nextSearch.addCost(n);
     nextSearch.addCommand(n);
-    // *debug << "============= return ===============" << endl;
-    // nextSearch.debugStage();
     return nextSearch;
 }
 
@@ -108,8 +125,7 @@ void GameSearch::addCost(int n)
 
 void GameSearch::addCommand(int n)
 {
-    cost += costs[n];
-    if(command != "")
+    if (command != "")
     {
         command += " ";
     }
@@ -122,6 +138,41 @@ void GameSearch::debugStage()
     gs.showField();
 }
 
+void GameSearch::showCommand()
+{
+    *debug << "command : " << command << endl;
+}
+
+vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
+{
+    vector<GameSearch> result;
+    
+    while (!states->empty())
+    {
+        GameSearch gSearch = states->front();
+        states->pop();
+
+        for (int n = 1; n <= 8; ++n)
+        {
+            *debug << "weapon : " << weapon << " n : " << n << endl;
+            if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
+            {
+                //*debug << "weapon : " << weapon << " action : " << n << endl;
+                GameSearch newGSearch = gSearch.doAction(0, weapon, n);
+                result.push_back(newGSearch);
+                newGSearch.showCommand();
+                states->push(newGSearch);
+            }
+        }
+        for(GameSearch gSearch : result)
+        {
+            *debug << gSearch.getCommand() << " :";
+        }
+        *debug << endl;
+    }
+    return result;
+}
+
 string getCommand(GameState *gs)
 {
     string result;
@@ -129,31 +180,21 @@ string getCommand(GameState *gs)
     queue<GameSearch> states;
     double sc = evaluate(gs);
     GameSearch firstState(gs, sc);
-    states.push(firstState);
-
-    while( !states.empty() )
+    
+    for(int weapon = 0; weapon < 3; ++weapon)
     {
-        GameSearch gSearch = states.front();
-        states.pop();
-
-        for(int weapon = 0; weapon < 3; ++weapon)
+        GameSearch tSearch = firstState;
+        tSearch.addCommand(weapon);
+        states.push(tSearch);
+        vector<GameSearch> tv = createPattern(&states, weapon);
+        if(tv.empty())
         {
-            for(int n = 1; n <= 8; ++n)
-            {
-                if( gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n) )
-                {
-                    *debug << "weapon : " << weapon << " action : " << n << endl;
-                    GameSearch newGSearch = gSearch.doAction(0, weapon, n);
-                    // *debug << "============= catch ===============" << endl;
-                    // newGSearch.debugStage();
-                    lookedStates.push_back(newGSearch);
-                    states.push(newGSearch);
-                }
-            }
+            continue;
         }
+        lookedStates.insert( lookedStates.end(), tv.begin(), tv.end() );
     }
 
-    if(lookedStates.empty())
+    if (lookedStates.empty())
     {
         return "0";
     }

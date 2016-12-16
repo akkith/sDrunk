@@ -215,7 +215,7 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
 {
     SamuraiState samurai = samuraiStates[team][wepon];
     // Cannot do anything under recovery
-    if (samurai.recovery != 0)
+    if (samurai.recovery != 0 || samurai.done != 0)
         return false;
     switch (action)
     {
@@ -438,16 +438,14 @@ int main(int argc, char *argv[])
     cout << '0' << endl;
     //ゲーム情報保持
     GameState gState;
-    //メインループ= 0;
-    //int cnt = 0;
+    //メインループ
     while (!gState.isGameOver())
     {
         gState.readTurnInfo();
         //player->play(info);
         string command = getCommand(&gState);
-        *debug << "command : " << command << endl;
-        cout << command;
-        //cout << cnt % 3 << " " << 9 << " " << 0 << endl;
-        //++cnt;
+
+        *debug << "================= command : " << command << " =========================" << endl;
+        cout << command << endl;
     }
 }

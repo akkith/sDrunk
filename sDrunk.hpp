@@ -38,39 +38,6 @@ struct SamuraiState {
   bool operator!=(const SamuraiState other) const;
 };
 
-//extern SamuraiState samuraiStates[2][3];
-
-// struct FieldUndo {
-//   int *section;
-//   int state;
-//   FieldUndo(int* sect);
-//   void apply();
-// };
-
-// struct SamuraiUndo {
-//   SamuraiState* ss;
-//   int x, y;
-//   int hidden;
-//   SamuraiUndo(SamuraiState* ss);
-//   void apply();
-// };
-
-// struct Undo {
-//   list<FieldUndo> fieldUndo;
-//   list<SamuraiUndo> samuraiUndo;
-//   void recField(int* sect);
-//   void recSamurai(SamuraiState* si);
-//   void apply();
-// };
-
-// struct GameInfo {
-//   GameInfo();
-//   void readTurnInfo();
-//   bool isValid(SamuraiState& ss, int action) const;
-//   void tryAction(SamuraiState& samurai, int action, Undo& undo,
-// 		 int& territory, int& injury, int& hiding);
-// };
-
 /* ゲーム状況
  * 侍と地図を一括して保持する方
  *　どんどん大きくなっている、やばい。
