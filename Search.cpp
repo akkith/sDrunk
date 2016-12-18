@@ -7,8 +7,12 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <time.h>
 
 //ostream *debug;
+bool timerFlag = true;
+clock_t timerStart;
+clock_t timerStop;
 
 //命令番号を入れるとコストを返してくれる
 int costs[] = {0, 4, 4, 4, 4, 2, 2, 2, 2, 1};
@@ -146,7 +150,7 @@ void GameSearch::showCommand()
 vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
 {
     vector<GameSearch> result;
-    
+
     while (!states->empty())
     {
         GameSearch gSearch = states->front();
@@ -175,31 +179,46 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
 
 string getCommand(GameState *gs)
 {
+    if (timerFlag)
+    {
+        timerStart = clock();
+        *debug << "start timer" << endl;
+    }
     string result;
     vector<GameSearch> lookedStates;
     queue<GameSearch> states;
     double sc = evaluate(gs);
     GameSearch firstState(gs, sc);
-    
-    for(int weapon = 0; weapon < 3; ++weapon)
+    if (timerFlag)
+    {
+        timerStop = clock();
+        *debug << "first create : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;
+    }
+    for (int weapon = 0; weapon < 3; ++weapon)
     {
         GameSearch tSearch = firstState;
         tSearch.addCommand(weapon);
         states.push(tSearch);
         vector<GameSearch> tv = createPattern(&states, weapon);
-        if(tv.empty())
-        {
-            continue;
-        }
-        lookedStates.insert( lookedStates.end(), tv.begin(), tv.end() );
+        lookedStates.insert(lookedStates.end(), tv.begin(), tv.end());
+        
     }
 
     if (lookedStates.empty())
     {
-        return "0";
+        if (timerFlag)
+        {
+            timerStop = clock();
+            *debug << "end : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;
+        }
+        return "0 0";
     }
-
+    
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
-
+    if (timerFlag)
+    {
+        timerStop = clock();
+        *debug << "end : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;
+    }
     return lookedStates.at(0).getCommand();
 }
