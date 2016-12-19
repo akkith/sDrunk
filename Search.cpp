@@ -158,21 +158,21 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
 
         for (int n = 1; n <= 8; ++n)
         {
-            *debug << "weapon : " << weapon << " n : " << n << endl;
+            //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
             {
                 //*debug << "weapon : " << weapon << " action : " << n << endl;
                 GameSearch newGSearch = gSearch.doAction(0, weapon, n);
                 result.push_back(newGSearch);
-                newGSearch.showCommand();
+                //newGSearch.showCommand();
                 states->push(newGSearch);
             }
         }
-        for(GameSearch gSearch : result)
-        {
-            *debug << gSearch.getCommand() << " :";
-        }
-        *debug << endl;
+        // for(GameSearch gSearch : result)
+        // {
+        //     *debug << gSearch.getCommand() << " :";
+        // }
+        // *debug << endl;
     }
     return result;
 }

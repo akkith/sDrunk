@@ -367,7 +367,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
                     {
                         isHome |= true;
                     }
-                    if (attackX == ss.x && attackY == ss.homeY)
+                    if (attackX == ss.x && attackY == ss.y)
                     {
                         //onEnemy |= true;
                         ss.dead();
@@ -376,7 +376,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
             }
         }
 
-        if (0 <= attackX && attackX <= stageWidth && 0 <= attackY && attackY <= stageHeight && !isHome)
+        if (0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight && !isHome)
         {
             field[attackX][attackY] = samurai->weapon;
         }
