@@ -106,6 +106,23 @@ class GameState
     void showField();
 };
 
+//点数表
+class ScoreBoard
+{
+    private:
+    //盤面の点数
+    double mapScore;
+    //侍状況の点数
+    double samuraiScore;
+    //隠れているときの点数
+    double hiddingScore;
+
+    public:
+    ScoreBoard();
+    void setScores(double mScore, double sScore, double hScore);
+    double getTotalScore();
+};
+
 //現在のゲーム状況を渡してコマンドを返す関数
 string getCommand(GameState *gs);
 //ゲーム状況をもらってその時の評価を返す

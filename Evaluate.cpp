@@ -10,6 +10,26 @@ double territoryPoint = 1;
 double koPoint = 1;
 double hiddenPoint = 1;
 
+ScoreBoard::ScoreBoard()
+{
+    mapScore = 0;
+    samuraiScore = 0;
+    hiddingScore = 0;
+}
+
+void ScoreBoard::setScores(double mScore, double sScore, double hScore)
+{
+    mapScore = mScore;
+    samuraiScore = sScore;
+    hiddingScore = hScore;
+}
+
+double ScoreBoard::getTotalScore()
+{
+    return mapScore + samuraiScore + hiddingScore;
+}
+
+
 //マップの点数計算
 double evaluateStage(int field[stageWidth][stageHeight])
 {
@@ -76,10 +96,10 @@ double evaluate(GameState *gs)
     gs->getSamuraiStates(ss);
     double samuraiScore = evaluateSamuraiState(ss);
     totalScore += samuraiScore;
-    gs->showSamurai();
-    gs->showField();
-    *debug << "Stage Score : " <<  stageScore
-           << " Samurai Score : " << samuraiScore << endl << endl;
+    // gs->showSamurai();
+    // gs->showField();
+    // *debug << "Stage Score : " <<  stageScore
+    //        << " Samurai Score : " << samuraiScore << endl << endl;
 
     return totalScore;
 }

@@ -156,7 +156,7 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
         GameSearch gSearch = states->front();
         states->pop();
 
-        for (int n = 1; n <= 8; ++n)
+        for (int n = 1; n <= 9; ++n)
         {
             //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
@@ -201,7 +201,6 @@ string getCommand(GameState *gs)
         states.push(tSearch);
         vector<GameSearch> tv = createPattern(&states, weapon);
         lookedStates.insert(lookedStates.end(), tv.begin(), tv.end());
-        
     }
 
     if (lookedStates.empty())
