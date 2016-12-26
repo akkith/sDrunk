@@ -31,14 +31,14 @@ double ScoreBoard::getTotalScore()
 
 
 //マップの点数計算
-double evaluateStage(int field[stageWidth][stageHeight])
+double evaluateStage(vector<int> field)
 {
     int score = 0;
     for(int x = 0; x < stageWidth; ++x)
     {
         for(int y = 0; y < stageHeight; ++y)
         {
-            int num = field[x][y];
+            int num = field[x * stageHeight + y];
             if(num < 3)
             {
                 score += (1 * territoryPoint);
@@ -57,14 +57,14 @@ double evaluateStage(int field[stageWidth][stageHeight])
 }
 
 //敵を倒した時の得点
-double evaluateSamuraiState(SamuraiState samuraiStates[2][3])
+double evaluateSamuraiState(vector<SamuraiState> samuraiStates)
 {
     double score = 0;
     for(int team = 0; team < 2; ++team)
     {
         for(int weapon = 0; weapon < 3; ++weapon)
         {
-            SamuraiState& ss = samuraiStates[team][weapon];
+            SamuraiState& ss = samuraiStates[team*3+weapon];
             //やられている状態を治療ターンの有無で調べる
             if(ss.recovery > 0)
             {
@@ -87,14 +87,15 @@ double evaluate(GameState *gs)
     //合計得点
     double totalScore = 0;
     //マップに関する得点
-    int field[stageWidth][stageHeight];
-    gs->getField(field);
-    double stageScore = evaluateStage(field);
+    //int field[stageWidth][stageHeight];
+    vector<int> * field = gs->getFieldRef();
+    double stageScore = evaluateStage(*field);
     totalScore += stageScore;
     //侍に関する得点
-    SamuraiState ss[2][3];
-    gs->getSamuraiStates(ss);
-    double samuraiScore = evaluateSamuraiState(ss);
+    //SamuraiState ss[2][3];
+    //gs->getSamuraiStates(ss);
+    vector<SamuraiState> * ss = gs->getSamuraiStatesRef();
+    double samuraiScore = evaluateSamuraiState(*ss);
     totalScore += samuraiScore;
     // gs->showSamurai();
     // gs->showField();

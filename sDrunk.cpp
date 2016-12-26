@@ -112,6 +112,9 @@ bool SamuraiState::operator!=(const SamuraiState other) const
 
 GameState::GameState()
 {
+    samuraiStates.resize(6);
+    field.resize(stageWidth*stageHeight);
+    turn = 0;
     //isGameOver = false;
 }
 
@@ -122,7 +125,7 @@ GameState::GameState(const GameState &gs)
     {
         for (int weapon = 0; weapon < 3; ++weapon)
         {
-            samuraiStates[team][weapon] = gs.samuraiStates[team][weapon];
+            samuraiStates[team * 3 + weapon] = gs.samuraiStates[team * 3 + weapon];
         }
     }
 
@@ -130,7 +133,7 @@ GameState::GameState(const GameState &gs)
     {
         for (int y = 0; y < stageHeight; ++y)
         {
-            field[x][y] = gs.field[x][y];
+            field[x * stageHeight + y] = gs.field[x * stageHeight + y];
         }
     }
 }
@@ -140,6 +143,7 @@ void GameState::readTurnInfo()
 {
     //今のターンを取得
     turn = getInt();
+    *debug << "read turn" << endl;
 
     //侍情報を取得
     for (int i = 0; i < 2; ++i)
@@ -148,42 +152,60 @@ void GameState::readTurnInfo()
         {
             SamuraiState samurai;
             samurai.initSamuraiState(i, j);
-            samuraiStates[i][j] = samurai;
+            samuraiStates[i * 3 + j] = samurai;
             //setSamuraiState(i ,w, &samurai);
         }
     }
+    *debug << "read samurai" << endl;
     //フィールド状況取得
     for (int y = 0; y != stageHeight; y++)
     {
         for (int x = 0; x != stageWidth; x++)
         {
-            field[x][y] = getInt();
+            field[x * stageHeight + y] = getInt();
         }
     }
+    *debug << "read fields" << endl;
 }
 
-//ステージ情報をもらう
-void GameState::getField(int (*f)[stageHeight])
+// //ステージ情報をもらう
+// void GameState::getField(int (*f)[stageHeight])
+// {
+//     for (int x = 0; x < stageWidth; ++x)
+//     {
+//         for (int y = 0; y < stageHeight; ++y)
+//         {
+//             f[x][y] = field[x * stageHeight + y];
+//         }
+//     }
+// }
+
+// //侍の情報をもらう
+// void GameState::getSamuraiStates(SamuraiState (*ss)[3])
+// {
+//     for (int team = 0; team < 2; ++team)
+//     {
+//         for (int weapon = 0; weapon < 3; ++weapon)
+//         {
+//             ss[team][weapon] = samuraiStates[team*3+weapon];
+//         }
+//     }
+// }
+
+vector<SamuraiState> *  GameState::getSamuraiStatesRef()
 {
-    for (int x = 0; x < stageWidth; ++x)
-    {
-        for (int y = 0; y < stageHeight; ++y)
-        {
-            f[x][y] = field[x][y];
-        }
-    }
+    return &samuraiStates;
 }
 
-//侍の情報をもらう
-void GameState::getSamuraiStates(SamuraiState (*ss)[3])
+//侍一人の情報をもらう
+SamuraiState * GameState::getSamuraiRef(int team, int weapon)
 {
-    for (int team = 0; team < 2; ++team)
-    {
-        for (int weapon = 0; weapon < 3; ++weapon)
-        {
-            ss[team][weapon] = samuraiStates[team][weapon];
-        }
-    }
+    return &samuraiStates[team*3+weapon];
+}
+
+vector<int> * GameState::getFieldRef()
+{
+    return &field;
 }
 
 //ゲーム終了か否か
@@ -198,22 +220,21 @@ void GameState::turnUpdate()
     //ターンのカウントを増やす
     ++turn;
     //治療のカウントを減らす
-    for (int i = 0; i < 2; ++i)
+    
+    for (SamuraiState &ss : samuraiStates)
     {
-        for (SamuraiState &ss : samuraiStates[i])
+        if (ss.recovery > 0)
         {
-            if (ss.recovery > 0)
-            {
-                --ss.recovery;
-            }
+            --ss.recovery;
         }
     }
+    
 }
 
 //行動可能か否か
 bool GameState::isValidAction(const int team, const int wepon, const int action) const
 {
-    SamuraiState samurai = samuraiStates[team][wepon];
+    SamuraiState samurai = samuraiStates[team * 3 + wepon];
     // Cannot do anything under recovery
     if (samurai.recovery != 0 || samurai.done != 0)
         return false;
@@ -253,11 +274,11 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
         if (nx < 0 || stageWidth <= nx || ny < 0 || stageHeight <= ny)
             return false;
         // Cannot enter enemy territory while hidden
-        if (samurai.hidden != 0 && 3 <= field[nx][ny])
+        if (samurai.hidden != 0 && 3 <= field[nx*stageHeight+ny])
             return false;
         for (int a = 0; a != 2; a++)
         {
-            for (SamuraiState ss : samuraiStates[a])
+            for (SamuraiState ss : samuraiStates)
             {
                 // When not hidden, cannot share a section with another apparent samurai
                 if (samurai.hidden == 0 && nx == ss.x && ny == ss.y && ss.hidden == 0)
@@ -274,7 +295,7 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
         {
             // Hide
             // Cannot only hide itself in the territory
-            if (3 <= field[samurai.x][samurai.y])
+            if (3 <= field[samurai.x * stageHeight + samurai.y])
                 return false;
         }
         else
@@ -282,7 +303,7 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
             // Expose
             for (int a = 0; a != 2; a++)
             {
-                for (SamuraiState ss : samuraiStates[a])
+                for (SamuraiState ss : samuraiStates)
                 {
                     // Cannot expose itself in a section with another apparent samurai
                     if (ss != samurai &&
@@ -306,7 +327,7 @@ void GameState::moveSamurai(int team, int wepon, int action)
         return;
     }
     //行動対象の侍
-    SamuraiState *samurai = &samuraiStates[team][wepon];
+    SamuraiState *samurai = &samuraiStates[team*3+wepon];
     switch (action)
     {
     case 0:
@@ -360,7 +381,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
         {
             for (int weapon = 0; weapon < 3; ++weapon)
             {
-                SamuraiState &ss = samuraiStates[team][weapon];
+                SamuraiState &ss = samuraiStates[team*3+weapon];
                 if (team == 1)
                 {
                     if (attackX == ss.homeX && attackY == ss.homeY)
@@ -378,7 +399,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
 
         if (0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight && !isHome)
         {
-            field[attackX][attackY] = samurai->weapon;
+            field[attackX*stageHeight+attackY] = samurai->weapon;
         }
     }
 }
@@ -399,7 +420,8 @@ void GameState::showSamurai()
 
         for (int weapon = 0; weapon < 3; ++weapon)
         {
-            SamuraiState samurai = samuraiStates[team][weapon];
+            //SamuraiState samurai = samuraiStates[team*3+weapon];
+            SamuraiState samurai = *getSamuraiRef(team, weapon);
             *debug << "weapon : " << samurai.weapon << " x : " << samurai.x << ", y : " << samurai.y
                    << " hidden : " << samurai.hidden << " recovery : " << samurai.recovery << endl;
         }
@@ -414,7 +436,7 @@ void GameState::showField()
     {
         for (int x = 0; x < stageWidth; ++x)
         {
-            *debug << field[x][y];
+            *debug << field[x*stageHeight+y];
         }
         *debug << endl;
     }
@@ -433,16 +455,19 @@ int main(int argc, char *argv[])
         debug = new ofstream("./dev/log");
         //debug = new ofstream("dev");
     }
+    
     //初期情報取得
     playOrder = getInt();
     cout << '0' << endl;
     //ゲーム情報保持
     GameState gState;
+    
     //メインループ
     while (!gState.isGameOver())
     {
         gState.readTurnInfo();
         //player->play(info);
+        
         string command = getCommand(&gState);
 
         *debug << "================= command : " << command << " =========================" << endl;

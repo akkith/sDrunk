@@ -7,6 +7,7 @@
 //#include <fstream>
 #include <cstring>
 #include <list>
+#include <vector>
 
 using namespace std;
 
@@ -20,11 +21,12 @@ extern int playOrder;
 //extern int totalTurns;
 //extern int currentTurn;
 
-extern ostream* debug;
+extern ostream *debug;
 
-void rotate(int direction, int x0, int y0, int& x, int& y);
+void rotate(int direction, int x0, int y0, int &x, int &y);
 
-struct SamuraiState {
+struct SamuraiState
+{
   int homeX, homeY;
   int weapon;
   int x, y;
@@ -44,83 +46,88 @@ struct SamuraiState {
  */
 class GameState
 {
-    private:
-    //現在のターン数
-    int turn;
-    //各侍の状況
-    SamuraiState samuraiStates[2][3];
-    //フィールド状況
-    int field[stageWidth][stageHeight];
+private:
+  //現在のターン数
+  int turn;
+  //各侍の状況
+  //SamuraiState samuraiStates[2][3];
+  //フィールド状況
+  //int field[stageWidth][stageHeight];
 
-    public:
-    //コンストラクタ
-    GameState();
-    //コピーコンストラクタ
-    GameState(const GameState &gs);
-    //標準入力からのゲーム情報を取得
-    void readTurnInfo();
-    //ステージ情報をもらう
-    void getField(int(*f)[stageHeight]);
-    //侍の情報をもらう
-    void getSamuraiStates(SamuraiState(*ss)[3]);
-    //侍情報更新
-    //void setSamuraiState(int team, int no, SamuraiState *samuraiState);
-    //フィールド更新
-    void setField(int field[stageWidth][stageHeight]);
-    //ゲーム終了判定
-    bool isGameOver();
+  vector<SamuraiState> samuraiStates;
+  vector<int> field;
 
-    //ターンの更新
-    void turnUpdate();
-    //侍番号と命令番号で行動可能か否かを返す
-    bool isValidAction(int team, int wepon, int action) const;
-    //侍番号と命令をもらいそのとうり動かしてみる
-    void moveSamurai(int team, int wepon, int action);
-    //よく使いそうなので攻撃は別にしておく
-    void attackSamurai(SamuraiState * samurai, int action);
+public:
+  //コンストラクタ
+  GameState();
+  //コピーコンストラクタ
+  GameState(const GameState &gs);
+  //標準入力からのゲーム情報を取得
+  void readTurnInfo();
+  //ステージ情報をもらう
+  void getField(int (*f)[stageHeight]);
+  vector<int> *getFieldRef();
+  //侍一人の情報をもらう
+  SamuraiState * getSamuraiRef(int team, int weapon);
+  //侍の情報をもらう
+  void getSamuraiStates(SamuraiState (*ss)[3]);
+  vector<SamuraiState> * getSamuraiStatesRef();
+  //フィールド更新
+  void setField(int field[stageWidth][stageHeight]);
+  //ゲーム終了判定
+  bool isGameOver();
 
-    GameState &operator=(const GameState &gs)
+  //ターンの更新
+  void turnUpdate();
+  //侍番号と命令番号で行動可能か否かを返す
+  bool isValidAction(int team, int wepon, int action) const;
+  //侍番号と命令をもらいそのとうり動かしてみる
+  void moveSamurai(int team, int wepon, int action);
+  //よく使いそうなので攻撃は別にしておく
+  void attackSamurai(SamuraiState *samurai, int action);
+
+  GameState &operator=(const GameState &gs)
+  {
+    turn = gs.turn;
+    for (int team = 0; team < 2; ++team)
     {
-      turn = gs.turn;
-      for(int team = 0; team < 2; ++team)
+      for (int weapon = 0; weapon < 3; ++weapon)
       {
-        for(int weapon = 0; weapon < 3; ++weapon)
-        {
-          samuraiStates[team][weapon] = gs.samuraiStates[team][weapon];
-        }
+        samuraiStates[team * 3 + weapon] = gs.samuraiStates[team * 3 + weapon];
       }
-      for(int x = 0; x < stageWidth; ++x)
+    }
+    for (int x = 0; x < stageWidth; ++x)
+    {
+      for (int y = 0; y < stageHeight; ++y)
       {
-        for(int y = 0; y < stageHeight; ++y)
-        {
-          field[x][y] = gs.field[x][y];
-        }
+        field[x * stageHeight + y] = gs.field[x * stageHeight + y];
       }
-
-      return *this;
     }
 
-    //デバッグ用：侍表示
-    void showSamurai();
-    //デバッグ用：フィールド表示
-    void showField();
+    return *this;
+  }
+
+  //デバッグ用：侍表示
+  void showSamurai();
+  //デバッグ用：フィールド表示
+  void showField();
 };
 
 //点数表
 class ScoreBoard
 {
-    private:
-    //盤面の点数
-    double mapScore;
-    //侍状況の点数
-    double samuraiScore;
-    //隠れているときの点数
-    double hiddingScore;
+private:
+  //盤面の点数
+  double mapScore;
+  //侍状況の点数
+  double samuraiScore;
+  //隠れているときの点数
+  double hiddingScore;
 
-    public:
-    ScoreBoard();
-    void setScores(double mScore, double sScore, double hScore);
-    double getTotalScore();
+public:
+  ScoreBoard();
+  void setScores(double mScore, double sScore, double hScore);
+  double getTotalScore();
 };
 
 //現在のゲーム状況を渡してコマンドを返す関数
@@ -133,4 +140,3 @@ double evaluate(GameState *gs);
 // };
 
 // extern Player* player;
-

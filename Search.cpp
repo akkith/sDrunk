@@ -34,6 +34,7 @@ class GameSearch
     string getCommand();
     void setCost(int n);
     bool checkCost(int n);
+    bool isHidden(int team, int weapon);
     bool checkAction(int team, int samurai, int n);
     GameSearch doAction(int team, int samurai, int n);
     void addCost(int n);
@@ -105,6 +106,12 @@ bool GameSearch::checkCost(int n)
     return cost + costs[n] <= 7;
 }
 
+bool GameSearch::isHidden(int team, int weapon)
+{
+    SamuraiState targetSamurai = *gs.getSamuraiRef(team, weapon);
+    return targetSamurai.hidden == 1;
+}
+
 bool GameSearch::checkAction(int team, int weapon, int n)
 {
     bool isValid = gs.isValidAction(team, weapon, n);
@@ -150,13 +157,25 @@ void GameSearch::showCommand()
 vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
 {
     vector<GameSearch> result;
+    GameSearch gSearch = states->front();
 
+    //隠れる行動は命令の最初と最後だけでいい
+    if (gSearch.isHidden(0, weapon))
+    {
+        if (gSearch.checkCost(9) && gSearch.checkAction(0, weapon, 9))
+        {
+            GameSearch newGSearch = gSearch.doAction(0, weapon, 9);
+            result.push_back(newGSearch);
+            states->push(newGSearch);
+        }
+    }
+    
     while (!states->empty())
     {
-        GameSearch gSearch = states->front();
+        gSearch = states->front();
         states->pop();
 
-        for (int n = 1; n <= 9; ++n)
+        for (int n = 1; n < 9; ++n)
         {
             //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
@@ -174,6 +193,23 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
         // }
         // *debug << endl;
     }
+
+    //結果の中で隠れていないものは隠れるパターンも作る
+    vector<GameSearch> hiddenState;
+    for (GameSearch tgs : result)
+    {
+        if (!tgs.isHidden(0, weapon))
+        {
+            if (tgs.checkCost(9) && tgs.checkAction(0, weapon, 9))
+            {
+                GameSearch newGSearch = tgs.doAction(0, weapon, 9);
+                hiddenState.push_back(newGSearch);
+                //states->push(newGSearch);
+            }
+        }
+    }
+
+    result.insert(result.end(), hiddenState.begin(), hiddenState.end());
     return result;
 }
 
@@ -212,7 +248,7 @@ string getCommand(GameState *gs)
         }
         return "0 0";
     }
-    
+
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
     if (timerFlag)
     {
