@@ -6,8 +6,8 @@
 
 #include "sDrunk.hpp"
 
-double territoryPoint = 1;
-double koPoint = 1;
+double territoryPoint = 10;
+double koPoint = 100;
 double hiddenPoint = 1;
 
 ScoreBoard::ScoreBoard()

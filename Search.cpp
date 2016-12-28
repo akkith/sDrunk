@@ -28,6 +28,7 @@ class GameSearch
   public:
     GameSearch(GameState *gamestate, double sc);
     GameSearch(const GameSearch &gs);
+    GameState * getGameStateRef();
     void setScore(double sc);
     double getScore();
     void setCommand(string cmd);
@@ -76,6 +77,11 @@ GameSearch::GameSearch(const GameSearch &gSearch)
     cost = gSearch.cost;
 }
 
+GameState * GameSearch::getGameStateRef()
+{
+    return &gs;
+}
+
 void GameSearch::setScore(double sc)
 {
     score = sc;
@@ -114,14 +120,15 @@ bool GameSearch::isHidden(int team, int weapon)
 
 bool GameSearch::checkAction(int team, int weapon, int n)
 {
-    bool isValid = gs.isValidAction(team, weapon, n);
+    bool isValid = isValidAction(&gs, team, weapon, n);
     return isValid;
 }
 
 GameSearch GameSearch::doAction(int team, int weapon, int n)
 {
     GameSearch nextSearch = *this;
-    nextSearch.gs.moveSamurai(team, weapon, n);
+    //nextSearch.gs.moveSamurai(team, weapon, n);
+    simulateAction(nextSearch.getGameStateRef(), team, weapon, n);
     double sc = evaluate(&(nextSearch.gs));
     nextSearch.setScore(sc);
     nextSearch.addCost(n);

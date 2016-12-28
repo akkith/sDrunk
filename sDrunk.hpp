@@ -130,6 +130,10 @@ public:
   double getTotalScore();
 };
 
+//行動可能か否か
+bool isValidAction(GameState *gs, int team, int weapon, int action);
+//シミュレーション
+void simulateAction(GameState *gs, int team, int weapon, int action);
 //現在のゲーム状況を渡してコマンドを返す関数
 string getCommand(GameState *gs);
 //ゲーム状況をもらってその時の評価を返す
