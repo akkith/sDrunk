@@ -3,6 +3,7 @@
  */
 
 #include "sDrunk.hpp"
+#include "ScoreBoard.hpp"
 #include <string>
 #include <vector>
 #include <queue>
@@ -30,6 +31,7 @@ class GameSearch
     GameSearch(const GameSearch &gs);
     GameState * getGameStateRef();
     void setScore(double sc);
+    void addScore(double sc);
     double getScore();
     void setCommand(string cmd);
     string getCommand();
@@ -87,6 +89,11 @@ void GameSearch::setScore(double sc)
     score = sc;
 }
 
+void GameSearch::addScore(double sc)
+{
+    score += sc;
+}
+
 double GameSearch::getScore()
 {
     return score;
@@ -127,12 +134,15 @@ bool GameSearch::checkAction(int team, int weapon, int n)
 GameSearch GameSearch::doAction(int team, int weapon, int n)
 {
     GameSearch nextSearch = *this;
+    ScoreBoard sb;
     //nextSearch.gs.moveSamurai(team, weapon, n);
-    simulateAction(nextSearch.getGameStateRef(), team, weapon, n);
-    double sc = evaluate(&(nextSearch.gs));
-    nextSearch.setScore(sc);
+    simulateAction(nextSearch.getGameStateRef(), team, weapon, n, &sb);
+    //double sc = evaluate(&(nextSearch.gs));
+    double sc = sb.getTotalScore();
+    nextSearch.addScore(sc);
     nextSearch.addCost(n);
     nextSearch.addCommand(n);
+    sb.showScore();
     return nextSearch;
 }
 
@@ -187,10 +197,10 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
             //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
             {
-                //*debug << "weapon : " << weapon << " action : " << n << endl;
+                *debug << "weapon : " << weapon << " action : " << n << endl;
                 GameSearch newGSearch = gSearch.doAction(0, weapon, n);
                 result.push_back(newGSearch);
-                //newGSearch.showCommand();
+                newGSearch.showCommand();
                 states->push(newGSearch);
             }
         }

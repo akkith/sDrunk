@@ -168,30 +168,6 @@ void GameState::readTurnInfo()
     *debug << "read fields" << endl;
 }
 
-// //ステージ情報をもらう
-// void GameState::getField(int (*f)[stageHeight])
-// {
-//     for (int x = 0; x < stageWidth; ++x)
-//     {
-//         for (int y = 0; y < stageHeight; ++y)
-//         {
-//             f[x][y] = field[x * stageHeight + y];
-//         }
-//     }
-// }
-
-// //侍の情報をもらう
-// void GameState::getSamuraiStates(SamuraiState (*ss)[3])
-// {
-//     for (int team = 0; team < 2; ++team)
-//     {
-//         for (int weapon = 0; weapon < 3; ++weapon)
-//         {
-//             ss[team][weapon] = samuraiStates[team*3+weapon];
-//         }
-//     }
-// }
-
 vector<SamuraiState> *  GameState::getSamuraiStatesRef()
 {
     return &samuraiStates;

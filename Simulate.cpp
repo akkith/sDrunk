@@ -4,6 +4,7 @@
  */
 
 #include "sDrunk.hpp"
+#include "ScoreBoard.hpp"
 #include <vector>
 
 //移動(1、南　２、東　３、北　４、西)
@@ -79,7 +80,7 @@ bool isValidAction(GameState *gs, int team, int weapon, int action)
     case 9:
         if (samurai->hidden == 0)
         {
-            return true;
+            return field->at(x * stageHeight + y) < 3;
         }
         else
         {
@@ -97,12 +98,14 @@ void turnUpdate(GameState * gs)
 }
 
 //攻撃のシミュレーション
-void doAttack(GameState *gs, SamuraiState *samurai, int action)
+void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
 {
     //侍の座標
     int samuraiX, samuraiY;
     samuraiX = samurai->x;
     samuraiY = samurai->y;
+    double nuriCnt = 0;
+    double koCnt = 0;
     //武器に合わせた攻撃マス数
     int attackSize = osize[samurai->weapon];
     for (int i = 0; i < attackSize; ++i)
@@ -130,6 +133,7 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action)
                     if (attackX == ss->x && attackY == ss->y)
                     {
                         //onEnemy |= true;
+                        ++koCnt;
                         ss->dead();
                     }
                 }
@@ -138,14 +142,23 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action)
 
         if (0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight && !isHome)
         {
-            vector<int> *field = gs->getFieldRef(); 
+            vector<int> *field = gs->getFieldRef();
+            if(field->at(attackX * stageHeight + attackY) >= 3)
+            {
+                ++nuriCnt;
+            }
             field->at(attackX * stageHeight + attackY) = samurai->weapon;
+            
         }
     }
+
+    sb->setMapScore(nuriCnt);
+    sb->setSamuraiScore(koCnt);
 }
 
-void simulateAction(GameState *gs, int team, int weapon, int action)
+void simulateAction(GameState *gs, int team, int weapon, int action, ScoreBoard * sb)
 {
+    double hiddingScore = 0;
     SamuraiState *samurai = gs->getSamuraiRef(team, weapon);
     if (!isValidAction(gs, team, weapon, action))
     {
@@ -161,7 +174,7 @@ void simulateAction(GameState *gs, int team, int weapon, int action)
     case 3:
     case 4:
         //攻撃
-        doAttack(gs, samurai, action);
+        doAttack(gs, samurai, action, sb);
         break;
     case 5:
     case 6:
@@ -174,9 +187,11 @@ void simulateAction(GameState *gs, int team, int weapon, int action)
     case 9:
         //潜伏
         samurai->hidden = samurai->hidden == 0 ? 1 : 0;
+        ++hiddingScore;
         break;
     default:
         break;
     }
+    sb->setHiddingScore(hiddingScore);
 }
 
