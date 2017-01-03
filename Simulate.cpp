@@ -194,4 +194,3 @@ void simulateAction(GameState *gs, int team, int weapon, int action, ScoreBoard 
     }
     sb->setHiddingScore(hiddingScore);
 }
-

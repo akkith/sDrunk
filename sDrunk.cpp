@@ -418,6 +418,26 @@ void GameState::showField()
     }
 }
 
+Analysis::Analysis()
+{
+    heatMap.resize(stageHeight * stageWidth);
+    beacon.resize(3);
+}
+
+void Analysis::update(GameState &gs)
+{
+    for(int i = 0; i < 3; ++i)
+    {
+        pair<int, int> b = make_pair(7, 7);
+        beacon.at(i) = b;
+    }
+}
+
+pair<int, int> Analysis::getAction(int weapon)
+{
+    return beacon.at(weapon);
+}
+
 //メイン関数
 int main(int argc, char *argv[])
 {
@@ -429,7 +449,6 @@ int main(int argc, char *argv[])
     else
     {
         debug = new ofstream("./dev/log");
-        //debug = new ofstream("dev");
     }
     
     //初期情報取得
@@ -437,14 +456,15 @@ int main(int argc, char *argv[])
     cout << '0' << endl;
     //ゲーム情報保持
     GameState gState;
+    Analysis analysis;
     
     //メインループ
     while (!gState.isGameOver())
     {
         gState.readTurnInfo();
-        //player->play(info);
-        
-        string command = getCommand(&gState);
+        analysis.update(gState);
+
+        string command = getCommand(&gState, &analysis);
 
         *debug << "================= command : " << command << " =========================" << endl;
         cout << command << endl;

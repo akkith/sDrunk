@@ -15,6 +15,12 @@ bool timerFlag = true;
 clock_t timerStart;
 clock_t timerStop;
 
+void showTime(int n)
+{
+    timerStop = clock();
+    *debug << "No " << n << " : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;  
+}
+
 //命令番号を入れるとコストを返してくれる
 int costs[] = {0, 4, 4, 4, 4, 2, 2, 2, 2, 1};
 
@@ -25,9 +31,10 @@ class GameSearch
     GameState gs;
     string command;
     int cost;
+    vector< vector<int> > useCommand;
 
   public:
-    GameSearch(GameState *gamestate, double sc);
+    GameSearch(GameState *gamestate, double sc, Analysis *analysis);
     GameSearch(const GameSearch &gs);
     GameState * getGameStateRef();
     void setScore(double sc);
@@ -42,6 +49,7 @@ class GameSearch
     GameSearch doAction(int team, int samurai, int n);
     void addCost(int n);
     void addCommand(int n);
+    vector<int> *getAction(int weapon);
 
     GameSearch &operator=(const GameSearch &gSearch)
     {
@@ -49,6 +57,7 @@ class GameSearch
         gs = gSearch.gs;
         command = gSearch.command;
         cost = gSearch.cost;
+        useCommand = gSearch.useCommand;
 
         return *this;
     }
@@ -63,12 +72,39 @@ bool compGameSearch(GameSearch a, GameSearch b)
     return a.getScore() > b.getScore();
 }
 
-GameSearch::GameSearch(GameState *gamestate, double sc)
+GameSearch::GameSearch(GameState *gamestate, double sc, Analysis *analysis)
 {
     gs = *gamestate;
     score = sc;
     command = "";
     cost = 0;
+    useCommand.resize(3);
+    vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
+    for(int i = 0; i < 3; ++i)
+    {
+        SamuraiState samurai = ss->at(i);
+        pair<int,int> beacon = analysis->getAction(i);
+        for(int n = 1; n <= 4; ++n)
+        {
+            useCommand.at(i).push_back(n);
+        }
+        if(samurai.y < beacon.second)
+        {
+            useCommand.at(i).push_back(5);   
+        }
+        if(samurai.x < beacon.first)
+        {
+            useCommand.at(i).push_back(6);   
+        }
+        if(samurai.y > beacon.second)
+        {
+            useCommand.at(i).push_back(7);   
+        }
+        if(samurai.x > beacon.second)
+        {
+            useCommand.at(i).push_back(8);   
+        }
+    }
 }
 
 GameSearch::GameSearch(const GameSearch &gSearch)
@@ -77,6 +113,7 @@ GameSearch::GameSearch(const GameSearch &gSearch)
     gs = gSearch.gs;
     command = gSearch.command;
     cost = gSearch.cost;
+    useCommand = gSearch.useCommand;
 }
 
 GameState * GameSearch::getGameStateRef()
@@ -160,6 +197,11 @@ void GameSearch::addCommand(int n)
     command += '0' + n;
 }
 
+vector<int> * GameSearch::getAction(int weapon)
+{
+    return &(useCommand.at(weapon));
+}
+
 //デバッグ用
 void GameSearch::debugStage()
 {
@@ -191,8 +233,8 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
     {
         gSearch = states->front();
         states->pop();
-
-        for (int n = 1; n < 9; ++n)
+        vector<int> *actions = gSearch.getAction(weapon);
+        for (int n : *actions)
         {
             //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
@@ -200,15 +242,22 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
                 *debug << "weapon : " << weapon << " action : " << n << endl;
                 GameSearch newGSearch = gSearch.doAction(0, weapon, n);
                 result.push_back(newGSearch);
-                newGSearch.showCommand();
+                //newGSearch.showCommand();
                 states->push(newGSearch);
             }
         }
-        // for(GameSearch gSearch : result)
+        // for (int n = 1; n < 9; ++n)
         // {
-        //     *debug << gSearch.getCommand() << " :";
+        //     //*debug << "weapon : " << weapon << " n : " << n << endl;
+        //     if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
+        //     {
+        //         *debug << "weapon : " << weapon << " action : " << n << endl;
+        //         GameSearch newGSearch = gSearch.doAction(0, weapon, n);
+        //         result.push_back(newGSearch);
+        //         //newGSearch.showCommand();
+        //         states->push(newGSearch);
+        //     }
         // }
-        // *debug << endl;
     }
 
     //結果の中で隠れていないものは隠れるパターンも作る
@@ -230,7 +279,7 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
     return result;
 }
 
-string getCommand(GameState *gs)
+string getCommand(GameState *gs, Analysis *an)
 {
     if (timerFlag)
     {
@@ -241,12 +290,12 @@ string getCommand(GameState *gs)
     vector<GameSearch> lookedStates;
     queue<GameSearch> states;
     double sc = evaluate(gs);
-    GameSearch firstState(gs, sc);
+    GameSearch firstState(gs, sc, an);
     if (timerFlag)
     {
-        timerStop = clock();
-        *debug << "first create : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;
+        showTime(1);
     }
+
     for (int weapon = 0; weapon < 3; ++weapon)
     {
         GameSearch tSearch = firstState;
@@ -260,8 +309,7 @@ string getCommand(GameState *gs)
     {
         if (timerFlag)
         {
-            timerStop = clock();
-            *debug << "end : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;
+            showTime(2);
         }
         return "0 0";
     }
@@ -269,8 +317,8 @@ string getCommand(GameState *gs)
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
     if (timerFlag)
     {
-        timerStop = clock();
-        *debug << "end : " << (double)(timerStop - timerStart) / CLOCKS_PER_SEC << endl;
+        showTime(2);
     }
+
     return lookedStates.at(0).getCommand();
 }

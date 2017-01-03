@@ -4,7 +4,6 @@
  */
 
 #include <iostream>
-//#include <fstream>
 #include <cstring>
 #include <list>
 #include <vector>
@@ -16,10 +15,7 @@ const int stageHeight = 15;
 const int recoveryTurns = 18;
 const int maxTurn = 96;
 
-//extern int field[width][height];
 extern int playOrder;
-//extern int totalTurns;
-//extern int currentTurn;
 
 extern ostream *debug;
 
@@ -34,7 +30,6 @@ struct SamuraiState
   int hidden;
   int recovery;
   void initSamuraiState(int a, int w);
-  //bool isValidAction(const int action) const;
   void dead();
   //比較用
   bool operator!=(const SamuraiState other) const;
@@ -49,10 +44,6 @@ class GameState
 private:
   //現在のターン数
   int turn;
-  //各侍の状況
-  //SamuraiState samuraiStates[2][3];
-  //フィールド状況
-  //int field[stageWidth][stageHeight];
 
   vector<SamuraiState> samuraiStates;
   vector<int> field;
@@ -113,15 +104,22 @@ public:
   void showField();
 };
 
+//分析に使う
+class Analysis
+{
+  private:
+  //マップの重要度
+  vector<int> heatMap;
+  //各侍の移動目標
+  vector< pair<int,int> > beacon;
 
+  public:
+  Analysis();
+  void update(GameState &gs);
+  pair<int, int> getAction(int weapon);
+};
 
 //現在のゲーム状況を渡してコマンドを返す関数
-string getCommand(GameState *gs);
+string getCommand(GameState *gs, Analysis *an);
 //ゲーム状況をもらってその時の評価を返す
 double evaluate(GameState *gs);
-
-// struct Player {
-//   virtual void play(GameInfo& info) = 0;
-// };
-
-// extern Player* player;
