@@ -179,7 +179,7 @@ GameSearch GameSearch::doAction(int team, int weapon, int n)
     nextSearch.addScore(sc);
     nextSearch.addCost(n);
     nextSearch.addCommand(n);
-    sb.showScore();
+    //sb.showScore();
     return nextSearch;
 }
 
@@ -239,7 +239,7 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
             //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
             {
-                *debug << "weapon : " << weapon << " action : " << n << endl;
+                //*debug << "weapon : " << weapon << " action : " << n << endl;
                 GameSearch newGSearch = gSearch.doAction(0, weapon, n);
                 result.push_back(newGSearch);
                 //newGSearch.showCommand();

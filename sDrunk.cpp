@@ -113,7 +113,7 @@ bool SamuraiState::operator!=(const SamuraiState other) const
 GameState::GameState()
 {
     samuraiStates.resize(6);
-    field.resize(stageWidth*stageHeight);
+    field.resize(stageWidth * stageHeight);
     turn = 0;
     //isGameOver = false;
 }
@@ -168,18 +168,23 @@ void GameState::readTurnInfo()
     *debug << "read fields" << endl;
 }
 
-vector<SamuraiState> *  GameState::getSamuraiStatesRef()
+int GameState::getTurn()
+{
+    return turn;
+}
+
+vector<SamuraiState> *GameState::getSamuraiStatesRef()
 {
     return &samuraiStates;
 }
 
 //侍一人の情報をもらう
-SamuraiState * GameState::getSamuraiRef(int team, int weapon)
+SamuraiState *GameState::getSamuraiRef(int team, int weapon)
 {
-    return &samuraiStates[team*3+weapon];
+    return &samuraiStates[team * 3 + weapon];
 }
 
-vector<int> * GameState::getFieldRef()
+vector<int> *GameState::getFieldRef()
 {
     return &field;
 }
@@ -196,7 +201,7 @@ void GameState::turnUpdate()
     //ターンのカウントを増やす
     ++turn;
     //治療のカウントを減らす
-    
+
     for (SamuraiState &ss : samuraiStates)
     {
         if (ss.recovery > 0)
@@ -204,7 +209,6 @@ void GameState::turnUpdate()
             --ss.recovery;
         }
     }
-    
 }
 
 //行動可能か否か
@@ -250,7 +254,7 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
         if (nx < 0 || stageWidth <= nx || ny < 0 || stageHeight <= ny)
             return false;
         // Cannot enter enemy territory while hidden
-        if (samurai.hidden != 0 && 3 <= field[nx*stageHeight+ny])
+        if (samurai.hidden != 0 && 3 <= field[nx * stageHeight + ny])
             return false;
         for (int a = 0; a != 2; a++)
         {
@@ -303,7 +307,7 @@ void GameState::moveSamurai(int team, int wepon, int action)
         return;
     }
     //行動対象の侍
-    SamuraiState *samurai = &samuraiStates[team*3+wepon];
+    SamuraiState *samurai = &samuraiStates[team * 3 + wepon];
     switch (action)
     {
     case 0:
@@ -357,7 +361,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
         {
             for (int weapon = 0; weapon < 3; ++weapon)
             {
-                SamuraiState &ss = samuraiStates[team*3+weapon];
+                SamuraiState &ss = samuraiStates[team * 3 + weapon];
                 if (team == 1)
                 {
                     if (attackX == ss.homeX && attackY == ss.homeY)
@@ -375,7 +379,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
 
         if (0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight && !isHome)
         {
-            field[attackX*stageHeight+attackY] = samurai->weapon;
+            field[attackX * stageHeight + attackY] = samurai->weapon;
         }
     }
 }
@@ -412,7 +416,7 @@ void GameState::showField()
     {
         for (int x = 0; x < stageWidth; ++x)
         {
-            *debug << field[x*stageHeight+y];
+            *debug << field[x * stageHeight + y];
         }
         *debug << endl;
     }
@@ -424,18 +428,95 @@ Analysis::Analysis()
     beacon.resize(3);
 }
 
+//前ターンの情報と今ターンの情報を比較し目標座標を設定
 void Analysis::update(GameState &gs)
 {
-    for(int i = 0; i < 3; ++i)
+    if (gs.getTurn() > 1)
     {
-        pair<int, int> b = make_pair(7, 7);
-        beacon.at(i) = b;
+        setHeatMap(beforeState, gs);
+        showHeatMap();
+    }
+    else
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            pair<int, int> b = make_pair(7, 7);
+            beacon.at(i) = b;
+        }
+    }
+    beforeState = gs;
+}
+
+void Analysis::setHeatMap(GameState &before, GameState &after)
+{
+    //マップ情報
+    vector<int> *beforeMap = before.getFieldRef();
+    vector<int> *afterMap = after.getFieldRef();
+    for (int i = 0; i < stageWidth * stageHeight; ++i)
+    {
+        int b = beforeMap->at(i);
+        int a = afterMap->at(i);
+        if (b != a && 3 <= b && b <= 5)
+        {
+            heatMap.at(i) = 2;
+        }
+        else if(a == 9)
+        {
+            heatMap.at(i) = 9;
+        }
+        else
+        {
+            heatMap.at(i) = 0;
+        }
+    }
+    //侍情報を取得
+    vector<SamuraiState> *afterSamurai = after.getSamuraiStatesRef();
+    vector<SamuraiState> *beforeSamurai = before.getSamuraiStatesRef();
+    for (int i = 3; i < 6; ++i)
+    {
+        int x, y, samuraiHeat;
+        SamuraiState samurai = afterSamurai->at(i);
+        SamuraiState bSamurai = beforeSamurai->at(i);
+        if (samurai.hidden == 1 && bSamurai.hidden != 1)
+        {
+            x = bSamurai.x;
+            y = bSamurai.y;
+            samuraiHeat = 3;
+        }
+        else if (samurai.hidden == 0)
+        {
+            x = samurai.x;
+            y = samurai.y;
+            samuraiHeat = 6;
+        }
+        else
+        {
+            x = -1;
+            y = -1;
+        }
+        if (x != -1 && y != -1)
+        {
+            heatMap.at(y * stageHeight + x) = samuraiHeat;
+        }
     }
 }
 
 pair<int, int> Analysis::getAction(int weapon)
 {
     return beacon.at(weapon);
+}
+
+void Analysis::showHeatMap()
+{
+    for (int i = 0; i < stageWidth * stageHeight; ++i)
+    {
+        *debug << heatMap.at(i);
+        
+        if ((i + 1) % stageWidth == 0)
+        {
+            *debug << endl;
+        }
+    }
 }
 
 //メイン関数
@@ -450,14 +531,14 @@ int main(int argc, char *argv[])
     {
         debug = new ofstream("./dev/log");
     }
-    
+
     //初期情報取得
     playOrder = getInt();
     cout << '0' << endl;
     //ゲーム情報保持
     GameState gState;
     Analysis analysis;
-    
+
     //メインループ
     while (!gState.isGameOver())
     {

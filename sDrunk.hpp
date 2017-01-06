@@ -55,6 +55,8 @@ public:
   GameState(const GameState &gs);
   //標準入力からのゲーム情報を取得
   void readTurnInfo();
+  //経過ターンを返す
+  int getTurn();
   //ステージ情報をもらう
   void getField(int (*f)[stageHeight]);
   vector<int> *getFieldRef();
@@ -108,6 +110,8 @@ public:
 class Analysis
 {
   private:
+  //前ターンのゲーム情報
+  GameState beforeState;
   //マップの重要度
   vector<int> heatMap;
   //各侍の移動目標
@@ -116,7 +120,9 @@ class Analysis
   public:
   Analysis();
   void update(GameState &gs);
+  void setHeatMap(GameState &before, GameState &after);
   pair<int, int> getAction(int weapon);
+  void showHeatMap();
 };
 
 //現在のゲーム状況を渡してコマンドを返す関数
