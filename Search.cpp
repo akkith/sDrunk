@@ -32,6 +32,7 @@ class GameSearch
     string command;
     int cost;
     vector< vector<int> > useCommand;
+    vector< pair<int,int> > beaconPoint;
 
   public:
     GameSearch(GameState *gamestate, double sc, Analysis *analysis);
@@ -79,11 +80,13 @@ GameSearch::GameSearch(GameState *gamestate, double sc, Analysis *analysis)
     command = "";
     cost = 0;
     useCommand.resize(3);
+    beaconPoint.resize(3);
     vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
     for(int i = 0; i < 3; ++i)
     {
         SamuraiState samurai = ss->at(i);
         pair<int,int> beacon = analysis->getAction(i);
+        beaconPoint.at(i) = beacon;
         for(int n = 1; n <= 4; ++n)
         {
             useCommand.at(i).push_back(n);
@@ -114,6 +117,7 @@ GameSearch::GameSearch(const GameSearch &gSearch)
     command = gSearch.command;
     cost = gSearch.cost;
     useCommand = gSearch.useCommand;
+    beaconPoint = gSearch.beaconPoint;
 }
 
 GameState * GameSearch::getGameStateRef()
@@ -173,9 +177,9 @@ GameSearch GameSearch::doAction(int team, int weapon, int n)
     GameSearch nextSearch = *this;
     ScoreBoard sb;
     //nextSearch.gs.moveSamurai(team, weapon, n);
-    simulateAction(nextSearch.getGameStateRef(), team, weapon, n, &sb);
+    simulateAction(nextSearch.getGameStateRef(), team, weapon, n, beaconPoint.at(weapon), &sb);
     //double sc = evaluate(&(nextSearch.gs));
-    double sc = sb.getTotalScore();
+    double sc = sb.getTotalScore(weapon);
     nextSearch.addScore(sc);
     nextSearch.addCost(n);
     nextSearch.addCommand(n);
@@ -246,18 +250,6 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
                 states->push(newGSearch);
             }
         }
-        // for (int n = 1; n < 9; ++n)
-        // {
-        //     //*debug << "weapon : " << weapon << " n : " << n << endl;
-        //     if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
-        //     {
-        //         *debug << "weapon : " << weapon << " action : " << n << endl;
-        //         GameSearch newGSearch = gSearch.doAction(0, weapon, n);
-        //         result.push_back(newGSearch);
-        //         //newGSearch.showCommand();
-        //         states->push(newGSearch);
-        //     }
-        // }
     }
 
     //結果の中で隠れていないものは隠れるパターンも作る

@@ -6,6 +6,7 @@
 #include "sDrunk.hpp"
 #include "ScoreBoard.hpp"
 #include <vector>
+#include <cmath>
 
 //移動(1、南　２、東　３、北　４、西)
 static int dx[] = {0, 0, 1, 0, -1};
@@ -152,14 +153,18 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
         }
     }
 
-    sb->setMapScore(nuriCnt);
-    sb->setSamuraiScore(koCnt);
+    sb->setMapScore(samurai->weapon, nuriCnt);
+    sb->setSamuraiScore(samurai->weapon, koCnt);
 }
 
-void simulateAction(GameState *gs, int team, int weapon, int action, ScoreBoard * sb)
+void simulateAction(GameState *gs, int team, int weapon, int action, pair<int,int> bPoint, ScoreBoard * sb)
 {
     double hiddingScore = 0;
+    //double diff = 0;
     SamuraiState *samurai = gs->getSamuraiRef(team, weapon);
+    int diffX = abs(samurai->x - bPoint.first);
+    int diffY = abs(samurai->y - bPoint.second);
+    int beforeD = diffX + diffY;
     if (!isValidAction(gs, team, weapon, action))
     {
         return;
@@ -183,6 +188,7 @@ void simulateAction(GameState *gs, int team, int weapon, int action, ScoreBoard 
         //移動
         samurai->x += dx[action - 4];
         samurai->y += dy[action - 4];
+        //++diff;
         break;
     case 9:
         //潜伏
@@ -192,5 +198,10 @@ void simulateAction(GameState *gs, int team, int weapon, int action, ScoreBoard 
     default:
         break;
     }
-    sb->setHiddingScore(hiddingScore);
+    
+    diffX = abs(samurai->x - bPoint.first);
+    diffY = abs(samurai->y - bPoint.second);
+    int afterD = diffX + diffY;
+    sb->setHiddingScore(weapon, hiddingScore);
+    sb->setMoveScore(weapon, beforeD - afterD);
 }

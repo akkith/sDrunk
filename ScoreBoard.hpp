@@ -5,69 +5,95 @@ class ScoreBoard
 {
   private:
     //盤面の点数
-    double mapScore;
+    double mapScore[3];
     //侍状況の点数
-    double samuraiScore;
+    double samuraiScore[3];
     //隠れているときの点数
-    double hiddingScore;
+    double hiddingScore[3];
+    //目標座標への距離
+    double moveScore[3];
     //各種倍率
-    double mapValue;
-    double samuraiValue;
-    double hiddingValue;
+    double mapValue[3];
+    double samuraiValue[3];
+    double hiddingValue[3];
+    double moveValue[3];
 
   public:
     //ScoreBoard();
     ScoreBoard()
     {
-        mapScore = 0;
-        samuraiScore = 0;
-        hiddingScore = 0;
-        
-        mapValue = 10;
-        samuraiValue = 100;
-        hiddingValue = 1;
+        for (int i = 0; i < 3; ++i)
+        {
+            mapScore[i] = 0;
+            samuraiScore[i] = 0;
+            hiddingScore[i] = 0;
+            moveScore[i] = 0;
+        }
+
+        mapValue[0] = 10;
+        samuraiValue[0] = 100;
+        hiddingValue[0] = 1;
+        moveValue[0] = 10000;
+
+        mapValue[1] = 10;
+        samuraiValue[1] = 100;
+        hiddingValue[1] = 1;
+        moveValue[1] = 1;
+
+        mapValue[2] = 10;
+        samuraiValue[2] = 100;
+        hiddingValue[2] = 1;
+        moveValue[2] = 1;
     }
-    //void setMapScore(double mScore);
-    void setMapScore(double mScore)
+    
+    void setMapScore(int weapon, double mScore)
     {
-        mapScore = mScore;
+        mapScore[weapon] = mScore;
     }
-    //void setSamuraiScore(double sScore);
-    void setSamuraiScore(double sScore)
+    
+    void setSamuraiScore(int weapon, double sScore)
     {
-        samuraiScore = sScore;
+        samuraiScore[weapon] = sScore;
     }
-    //void setHiddingScore(double hScore);
-    void setHiddingScore(double hScore)
+    
+    void setHiddingScore(int weapon, double hScore)
     {
-        hiddingScore = hScore;
+        hiddingScore[weapon] = hScore;
     }
-    //double getTotalScore() const;
-    double getTotalScore() const
+
+    void setMoveScore(int weapon, double moScore)
     {
-        return (mapScore * mapValue) + (samuraiScore * samuraiValue) + (hiddingScore * hiddingValue);
+        moveScore[weapon] = moScore;
+    }
+
+    double getTotalScore(int i) const
+    {
+        return (mapScore[i] * mapValue[i]) + (samuraiScore[i] * samuraiValue[i])
+             + (hiddingScore[i] * hiddingValue[i]) + (moveScore[i] * moveValue[i]);
     }
 
     //デバッグ用
     void showScore() const
     {
-        *debug << "mapScore : " << mapScore << endl
-                << "SamuraiScore : " << samuraiScore << endl
-                << "hiddingScore : " << hiddingScore << endl
-                << "Total : " << getTotalScore() << endl << endl;
+        for (int i = 0; i < 3; ++i)
+        {
+            *debug << "mapScore : " << mapScore[i] << endl
+                   << "SamuraiScore : " << samuraiScore[i] << endl
+                   << "hiddingScore : " << hiddingScore[i] << endl
+                   << "Total : " << getTotalScore(i) << endl
+                   << endl;
+        }
     }
 
-    bool operator<(const ScoreBoard &other)
-    {
-        return this->getTotalScore() < other.getTotalScore();
-    }
+    // bool operator<(const ScoreBoard &other)
+    // {
+    //     return this->getTotalScore() < other.getTotalScore();
+    // }
 };
-
-
 
 //=========あまりよろしくないところにいる=====================
 
 //行動可能か否か
 bool isValidAction(GameState *gs, int team, int weapon, int action);
 //シミュレーション
-void simulateAction(GameState *gs, int team, int weapon, int action, ScoreBoard *sb);
+void simulateAction(GameState *gs, int team, int weapon, int action, pair<int,int> bPoint, ScoreBoard *sb);
