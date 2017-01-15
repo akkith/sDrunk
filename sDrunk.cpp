@@ -1,6 +1,8 @@
 #include "sDrunk.hpp"
 #include <unistd.h>
 #include <cstdlib>
+#include <cmath>
+#include <queue>
 #include <fstream>
 
 int playOrder;
@@ -32,7 +34,7 @@ int getInt()
     return v;
 }
 
-//移動(1、南　２、東　３、北　４、西)
+//移動(0, 無 1、南　２、東　３、北　４、西)
 static int dx[] = {0, 0, 1, 0, -1};
 static int dy[] = {0, 1, 0, -1, 0};
 
@@ -133,7 +135,7 @@ GameState::GameState(const GameState &gs)
     {
         for (int y = 0; y < stageHeight; ++y)
         {
-            field[x * stageHeight + y] = gs.field[x * stageHeight + y];
+            field[y * stageHeight + x] = gs.field[y * stageHeight + x];
         }
     }
 }
@@ -162,7 +164,7 @@ void GameState::readTurnInfo()
     {
         for (int x = 0; x != stageWidth; x++)
         {
-            field[x * stageHeight + y] = getInt();
+            field[y * stageHeight + x] = getInt();
         }
     }
     *debug << "read fields" << endl;
@@ -254,7 +256,7 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
         if (nx < 0 || stageWidth <= nx || ny < 0 || stageHeight <= ny)
             return false;
         // Cannot enter enemy territory while hidden
-        if (samurai.hidden != 0 && 3 <= field[nx * stageHeight + ny])
+        if (samurai.hidden != 0 && 3 <= field[ny * stageHeight + nx])
             return false;
         for (int a = 0; a != 2; a++)
         {
@@ -275,7 +277,7 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
         {
             // Hide
             // Cannot only hide itself in the territory
-            if (3 <= field[samurai.x * stageHeight + samurai.y])
+            if (3 <= field[samurai.y * stageHeight + samurai.x])
                 return false;
         }
         else
@@ -379,7 +381,7 @@ void GameState::attackSamurai(SamuraiState *samurai, int action)
 
         if (0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight && !isHome)
         {
-            field[attackX * stageHeight + attackY] = samurai->weapon;
+            field[attackY * stageHeight + attackX] = samurai->weapon;
         }
     }
 }
@@ -416,16 +418,32 @@ void GameState::showField()
     {
         for (int x = 0; x < stageWidth; ++x)
         {
-            *debug << field[x * stageHeight + y];
+            *debug << field[y * stageHeight + x];
         }
         *debug << endl;
     }
 }
 
+//コンストラクタ
 Analysis::Analysis()
 {
     heatMap.resize(stageHeight * stageWidth);
-    beacon.resize(3);
+    enemyAttackRange = vector<bool>(stageHeight * stageWidth,false);
+    myAttackRange = vector<bool>(stageHeight * stageWidth,false);
+    tisFlag = vector<bool>(3,false);
+
+    beacon.push_back( make_pair(7,7) );
+    dashFlag.push_back(true);
+    targetHeat.push_back(3);
+
+    beacon.push_back( make_pair(4,10) );
+    dashFlag.push_back(false);
+    targetHeat.push_back(3);
+
+    beacon.push_back( make_pair(4,4) );
+    dashFlag.push_back(false);
+    targetHeat.push_back(3);
+
 }
 
 //前ターンの情報と今ターンの情報を比較し目標座標を設定
@@ -434,15 +452,12 @@ void Analysis::update(GameState &gs)
     if (gs.getTurn() > 1)
     {
         setHeatMap(beforeState, gs);
-        showHeatMap();
-    }
-    else
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            pair<int, int> b = make_pair(7, 7);
-            beacon.at(i) = b;
-        }
+        setAttackRange(gs);
+        setBeacon(gs);
+
+        //showHeatMap();
+        showEnemyAttackRange();
+        showTisFlag();
     }
     beforeState = gs;
 }
@@ -452,21 +467,23 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
     //マップ情報
     vector<int> *beforeMap = before.getFieldRef();
     vector<int> *afterMap = after.getFieldRef();
-    for (int i = 0; i < stageWidth * stageHeight; ++i)
+    for (int x = 0; x < stageWidth; ++x)
     {
-        int b = beforeMap->at(i);
-        int a = afterMap->at(i);
-        if (b != a && 3 <= b && b <= 5)
+        //for (int i = 0; i < stageWidth * stageHeight; ++i)
+        for(int y = 0; y < stageHeight; ++y)
         {
-            heatMap.at(i) = 2;
-        }
-        else if(a == 9)
-        {
-            heatMap.at(i) = 9;
-        }
-        else
-        {
-            heatMap.at(i) = 0;
+            int p = y * stageHeight + x;
+            int b = beforeMap->at(p);
+            int a = afterMap->at(p);
+            if (b != a && 3 <= b && b <= 5)
+            {
+                //heatMap.at(i) = 2;
+                dropHeat(2, x, y);
+            }
+            else
+            {
+                heatMap.at(p) = 0;
+            }
         }
     }
     //侍情報を取得
@@ -496,7 +513,107 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         }
         if (x != -1 && y != -1)
         {
-            heatMap.at(y * stageHeight + x) = samuraiHeat;
+            //heatMap.at(y * stageHeight + x) = samuraiHeat;
+            dropHeat(samuraiHeat, x, y);
+        }
+    }
+}
+
+void Analysis::setBeacon(GameState &gs)
+{
+    vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
+    int inf = stageHeight * stageWidth;
+    int diff[] = {100,100,100};
+    int dist[] = {inf,inf,inf};
+    //beacon = vector<pair<int,int>>(3,make_pair(-1,-1));
+    
+    for(int x = 0; x < stageWidth; ++x)
+    {
+        for(int y = 0; y < stageHeight; ++y)
+        {
+            int heat = heatMap.at(y * stageHeight + x);
+            for(int w = 0; w < 3; ++w)
+            {
+                SamuraiState samurai = ss->at(w);
+                int tdist = abs(samurai.x - x) + abs(samurai.y - y);
+                int theat = abs(heat - targetHeat.at(w));
+                if( heat != 0 && theat <= diff[w] && tdist <= dist[w]
+                &&(!enemyAttackRange.at(y*stageHeight+x) || tisFlag.at(w)))
+                {
+                    beacon.at(w) = make_pair(x,y);
+                    dashFlag.at(w) = false;
+                }
+            }
+        }
+    }
+}
+
+void Analysis::setAttackRange(GameState &gs)
+{
+    vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
+    vector<SamuraiState> myss = {ss->at(0),ss->at(1),ss->at(2)};
+    vector<SamuraiState> enss = {ss->at(3),ss->at(4),ss->at(5)};
+    tisFlag = vector<bool>(3,false);
+    vector<bool> dummy(3,false);
+    myAttackRange = setKillzone(myss,enss,tisFlag);
+    enemyAttackRange = setKillzone(enss,myss,dummy);
+}
+
+vector<bool> Analysis::setKillzone(vector<SamuraiState> &aTeam,
+                                   vector<SamuraiState> &bTeam,
+                                   vector<bool> &tis)
+{
+    vector<bool> killzone(stageHeight*stageWidth, false);
+    //vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
+    for(SamuraiState samurai : aTeam)
+    {
+        int w = samurai.weapon;
+        int x = samurai.x;
+        int y = samurai.y;
+        for(int d = 1; d < 5; ++d)
+        {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if(0 > nx || nx >= stageWidth || 0 > ny || ny >= stageHeight)
+            {
+                continue;
+            }
+            int os = osize[w];
+            for(int o = 0; o < os; ++o)
+            {
+                for(int i = 0; i < 4; ++i)
+                {
+                    int attackX, attackY;
+                    rotate(i, ox[w][o], oy[w][o], attackX, attackY);
+                    attackX += nx;
+                    attackY += ny;
+                    if(0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight)
+                    {
+                        killzone.at(attackY*stageHeight+attackX) = true;
+                        setTis(aTeam,bTeam,x,y,attackX,attackY,tis);
+                    }
+                }
+            }
+        }
+    }
+    return killzone;
+}
+
+void Analysis::setTis(vector<SamuraiState> &aTeam, vector<SamuraiState> &bTeam,
+                        int x, int y, int ax, int ay,
+                        vector<bool> &tis)
+{
+    for(SamuraiState samurai : bTeam)
+    {
+        if(samurai.x == ax && samurai.y == ay)
+        {
+            for(SamuraiState s : aTeam)
+            {
+                if(s.x == x && s.y == y)
+                {
+                    tis.at(s.weapon) = true;
+                }
+            }
         }
     }
 }
@@ -506,17 +623,90 @@ pair<int, int> Analysis::getAction(int weapon)
     return beacon.at(weapon);
 }
 
+bool Analysis::getDashFlag(int weapon)
+{
+    return dashFlag.at(weapon);
+}
+
+void Analysis::dropHeat(int heat, int x, int y)
+{
+    pair<int, int> point = make_pair(x, y);
+    pair<int, pair<int, int>> seeker = make_pair(heat, point);
+    vector<bool> looked(stageHeight*stageHeight, false);
+    queue<pair<int, pair<int, int>>> que;
+    que.push(seeker);
+    heatMap.at(y * stageWidth + x) = heat;
+    looked.at(y * stageHeight + x) = true;
+
+    while (!que.empty())
+    {
+        seeker = que.front();
+        que.pop();
+        int tHeat = seeker.first - 1;
+        point = seeker.second;
+        if (tHeat <= 0)
+        {
+            continue;
+        }
+
+        for (int i = 1; i < 5; ++i)
+        {
+            int nx = point.first + dx[i];
+            int ny = point.second + dy[i];
+            int np = ny * stageHeight + nx;
+            if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
+            {
+                heatMap.at(np) += tHeat;
+                looked.at(np) = true;
+                que.push(make_pair(tHeat, make_pair(nx, ny)));
+            }
+        }
+    }
+}
+
 void Analysis::showHeatMap()
 {
     for (int i = 0; i < stageWidth * stageHeight; ++i)
     {
         *debug << heatMap.at(i);
-        
+
         if ((i + 1) % stageWidth == 0)
         {
             *debug << endl;
         }
     }
+}
+
+void Analysis::showEnemyAttackRange()
+{
+    for (int i = 0; i < stageWidth * stageHeight; ++i)
+    {
+        int n = 0;
+        if(enemyAttackRange.at(i))
+        {
+            n = 1;
+        }
+        *debug << n;
+
+        if ((i + 1) % stageWidth == 0)
+        {
+            *debug << endl;
+        }
+    }
+
+}
+
+void Analysis::showTisFlag()
+{
+    for(int w = 0; w < 3; ++w)
+    {
+        string str = "not found";
+        if(tisFlag.at(w))
+        {
+            str = "found";
+        }
+        *debug << "weapon " << w << ": target is " << str << endl; 
+    }   
 }
 
 //メイン関数
@@ -544,6 +734,7 @@ int main(int argc, char *argv[])
     {
         gState.readTurnInfo();
         analysis.update(gState);
+        *debug << "Turn : " << gState.getTurn() << endl;
 
         string command = getCommand(&gState, &analysis);
 

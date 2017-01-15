@@ -33,7 +33,7 @@ class ScoreBoard
         mapValue[0] = 10;
         samuraiValue[0] = 100;
         hiddingValue[0] = 1;
-        moveValue[0] = 10000;
+        moveValue[0] = 1;
 
         mapValue[1] = 10;
         samuraiValue[1] = 100;

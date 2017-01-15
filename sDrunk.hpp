@@ -93,7 +93,7 @@ public:
     {
       for (int y = 0; y < stageHeight; ++y)
       {
-        field[x * stageHeight + y] = gs.field[x * stageHeight + y];
+        field[y * stageHeight + x] = gs.field[y * stageHeight + x];
       }
     }
 
@@ -116,13 +116,37 @@ class Analysis
   vector<int> heatMap;
   //各侍の移動目標
   vector< pair<int,int> > beacon;
+  //目標になる熱量
+  vector<int> targetHeat;
+  //移動優先状態
+  vector<bool> dashFlag;
+  //射程範囲内に敵がいるか否か
+  vector<bool> tisFlag;
+  //敵が一手で攻撃できるエリア
+  vector<bool> enemyAttackRange;
+  //味方が一手で攻撃できるエリア
+  vector<bool> myAttackRange;
 
   public:
   Analysis();
   void update(GameState &gs);
   void setHeatMap(GameState &before, GameState &after);
+  void setBeacon(GameState &gs);
+  void setAttackRange(GameState &gs);
+  vector<bool> setKillzone(vector<SamuraiState> &aTeam,
+                           vector<SamuraiState> &bTeam,
+                           vector<bool> &tis);
+  void setTis(vector<SamuraiState> &aTeam,
+              vector<SamuraiState> &bTeam,
+              int x, int y, int ax, int ay,
+              vector<bool> &tis);
   pair<int, int> getAction(int weapon);
+  bool getDashFlag(int weapon);
+  void dropHeat(int heat, int x, int y);
+
   void showHeatMap();
+  void showEnemyAttackRange();
+  void showTisFlag();
 };
 
 //現在のゲーム状況を渡してコマンドを返す関数

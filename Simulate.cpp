@@ -71,7 +71,7 @@ bool isValidAction(GameState *gs, int team, int weapon, int action)
         {
             return false;
         }
-        if (samurai->hidden == 1 && field->at(x * stageHeight + y) >= 3)
+        if (samurai->hidden == 1 && field->at(y * stageHeight + x) >= 3)
         {
             return false;
         }
@@ -81,7 +81,7 @@ bool isValidAction(GameState *gs, int team, int weapon, int action)
     case 9:
         if (samurai->hidden == 0)
         {
-            return field->at(x * stageHeight + y) < 3;
+            return field->at(y * stageHeight + x) < 3;
         }
         else
         {
@@ -144,11 +144,11 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
         if (0 <= attackX && attackX < stageWidth && 0 <= attackY && attackY < stageHeight && !isHome)
         {
             vector<int> *field = gs->getFieldRef();
-            if(field->at(attackX * stageHeight + attackY) >= 3)
+            if(field->at(attackY * stageHeight + attackX) >= 3)
             {
                 ++nuriCnt;
             }
-            field->at(attackX * stageHeight + attackY) = samurai->weapon;
+            field->at(attackY * stageHeight + attackX) = samurai->weapon;
             
         }
     }

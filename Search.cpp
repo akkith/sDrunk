@@ -86,24 +86,35 @@ GameSearch::GameSearch(GameState *gamestate, double sc, Analysis *analysis)
     {
         SamuraiState samurai = ss->at(i);
         pair<int,int> beacon = analysis->getAction(i);
+        bool dashFlag = analysis->getDashFlag(i);
         beaconPoint.at(i) = beacon;
-        for(int n = 1; n <= 4; ++n)
+        for(int n = 1; n <= 4 && !dashFlag ; ++n)
         {
             useCommand.at(i).push_back(n);
         }
-        if(samurai.y < beacon.second)
+        if(samurai.y == -1)
+        {
+            useCommand.at(i).push_back(5);
+            useCommand.at(i).push_back(7);
+        }
+        else if(samurai.y < beacon.second)
         {
             useCommand.at(i).push_back(5);   
         }
-        if(samurai.x < beacon.first)
-        {
-            useCommand.at(i).push_back(6);   
-        }
-        if(samurai.y > beacon.second)
+        else if(samurai.y > beacon.second)
         {
             useCommand.at(i).push_back(7);   
         }
-        if(samurai.x > beacon.second)
+        if(samurai.x == -1)
+        {
+            useCommand.at(i).push_back(6);
+            useCommand.at(i).push_back(8);
+        }
+        else if(samurai.x < beacon.first)
+        {
+            useCommand.at(i).push_back(6);   
+        }
+        else if(samurai.x > beacon.second)
         {
             useCommand.at(i).push_back(8);   
         }
@@ -281,7 +292,8 @@ string getCommand(GameState *gs, Analysis *an)
     string result;
     vector<GameSearch> lookedStates;
     queue<GameSearch> states;
-    double sc = evaluate(gs);
+    //double sc = evaluate(gs);
+    double sc = 0;
     GameSearch firstState(gs, sc, an);
     if (timerFlag)
     {
