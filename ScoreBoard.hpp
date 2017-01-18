@@ -1,10 +1,11 @@
+#include "Search.hpp"
 using namespace std;
 
 //点数表
 class ScoreBoard
 {
   private:
-    //盤面の点数
+    //塗りの点数
     double mapScore[3];
     //侍状況の点数
     double samuraiScore[3];
@@ -17,6 +18,8 @@ class ScoreBoard
     double samuraiValue[3];
     double hiddingValue[3];
     double moveValue[3];
+    //やられたときのマイナス値
+    double deadPenalty;
 
   public:
     //ScoreBoard();
@@ -44,6 +47,8 @@ class ScoreBoard
         samuraiValue[2] = 100;
         hiddingValue[2] = 1;
         moveValue[2] = 1;
+
+        deadPenalty = -1000;
     }
     
     void setMapScore(int weapon, double mScore)
@@ -72,6 +77,11 @@ class ScoreBoard
              + (hiddingScore[i] * hiddingValue[i]) + (moveScore[i] * moveValue[i]);
     }
 
+    double getDeadPenalty()
+    {
+        return deadPenalty;
+    }
+
     //デバッグ用
     void showScore() const
     {
@@ -97,3 +107,5 @@ class ScoreBoard
 bool isValidAction(GameState *gs, int team, int weapon, int action);
 //シミュレーション
 void simulateAction(GameState *gs, int team, int weapon, int action, pair<int,int> bPoint, ScoreBoard *sb);
+//盤面の得点の補正
+void reviseStatePoint(vector<GameSearch> *searchs, Analysis *an, ScoreBoard *sb);

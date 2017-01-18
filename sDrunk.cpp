@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <cmath>
-#include <queue>
 #include <fstream>
 
 int playOrder;
@@ -427,7 +426,12 @@ void GameState::showField()
 //コンストラクタ
 Analysis::Analysis()
 {
-    heatMap.resize(stageHeight * stageWidth);
+    //heatMap.resize(stageHeight * stageWidth);
+    heatMap = vector<int>(stageHeight * stageWidth, 0);
+    for(int i = 0; i < 3; ++i)
+    {
+        beforeHeatMaps.push_back(heatMap);
+    }
     enemyAttackRange = vector<bool>(stageHeight * stageWidth,false);
     myAttackRange = vector<bool>(stageHeight * stageWidth,false);
     tisFlag = vector<bool>(3,false);
@@ -455,18 +459,21 @@ void Analysis::update(GameState &gs)
         setAttackRange(gs);
         setBeacon(gs);
 
-        //showHeatMap();
-        showEnemyAttackRange();
-        showTisFlag();
+        showHeatMap();
+        //showEnemyAttackRange();
+        //showTisFlag();
+        showBeacon();
     }
     beforeState = gs;
 }
 
 void Analysis::setHeatMap(GameState &before, GameState &after)
 {
+    vector<int> hMap(stageHeight*stageWidth, 0);
     //マップ情報
     vector<int> *beforeMap = before.getFieldRef();
     vector<int> *afterMap = after.getFieldRef();
+
     for (int x = 0; x < stageWidth; ++x)
     {
         //for (int i = 0; i < stageWidth * stageHeight; ++i)
@@ -475,14 +482,9 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
             int p = y * stageHeight + x;
             int b = beforeMap->at(p);
             int a = afterMap->at(p);
-            if (b != a && 3 <= b && b <= 5)
+            if (b != a && 3 <= a && a <= 5)
             {
-                //heatMap.at(i) = 2;
-                dropHeat(2, x, y);
-            }
-            else
-            {
-                heatMap.at(p) = 0;
+                dropHeat(hMap, 2, x, y);
             }
         }
     }
@@ -513,10 +515,12 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         }
         if (x != -1 && y != -1)
         {
-            //heatMap.at(y * stageHeight + x) = samuraiHeat;
-            dropHeat(samuraiHeat, x, y);
+            dropHeat(hMap, samuraiHeat, x, y);
         }
     }
+    beforeHeatMaps.erase(beforeHeatMaps.begin());
+    beforeHeatMaps.push_back(hMap);
+    calcHeatMap();
 }
 
 void Analysis::setBeacon(GameState &gs)
@@ -548,6 +552,16 @@ void Analysis::setBeacon(GameState &gs)
     }
 }
 
+//槍用ビーコン設定関数
+void Analysis::setSpearBeacon()
+{
+    //熱が５くらいあったら敵がいると思う
+    //高熱点が多すぎると正直どこいても不思議じゃない
+    //敵の攻撃可能地点に踏み込まない
+    //攻撃方向を決めておいたほうが良さげ
+
+}
+
 void Analysis::setAttackRange(GameState &gs)
 {
     vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
@@ -557,6 +571,18 @@ void Analysis::setAttackRange(GameState &gs)
     vector<bool> dummy(3,false);
     myAttackRange = setKillzone(myss,enss,tisFlag);
     enemyAttackRange = setKillzone(enss,myss,dummy);
+}
+
+void Analysis::calcHeatMap()
+{
+    heatMap = vector<int>(stageHeight*stageWidth,0);
+    for(vector<int> theat : beforeHeatMaps)
+    {
+        for(int i = 0; i < stageWidth * stageHeight; ++i)
+        {
+            heatMap.at(i) += theat.at(i);
+        }
+    }
 }
 
 vector<bool> Analysis::setKillzone(vector<SamuraiState> &aTeam,
@@ -628,14 +654,14 @@ bool Analysis::getDashFlag(int weapon)
     return dashFlag.at(weapon);
 }
 
-void Analysis::dropHeat(int heat, int x, int y)
+void Analysis::dropHeat(vector<int> &hMap, int heat, int x, int y)
 {
     pair<int, int> point = make_pair(x, y);
     pair<int, pair<int, int>> seeker = make_pair(heat, point);
     vector<bool> looked(stageHeight*stageHeight, false);
     queue<pair<int, pair<int, int>>> que;
     que.push(seeker);
-    heatMap.at(y * stageWidth + x) = heat;
+    hMap.at(y * stageWidth + x) = heat;
     looked.at(y * stageHeight + x) = true;
 
     while (!que.empty())
@@ -654,14 +680,21 @@ void Analysis::dropHeat(int heat, int x, int y)
             int nx = point.first + dx[i];
             int ny = point.second + dy[i];
             int np = ny * stageHeight + nx;
+            //*debug << "nx : " << nx << ", ny : " << ny << endl;
             if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
             {
-                heatMap.at(np) += tHeat;
+                //heatMap.at(np) += tHeat;
+                hMap.at(np) += tHeat;
                 looked.at(np) = true;
                 que.push(make_pair(tHeat, make_pair(nx, ny)));
             }
         }
     }
+}
+
+bool Analysis::checkEARange(int p)
+{
+    return enemyAttackRange.at(p);
 }
 
 void Analysis::showHeatMap()
@@ -707,6 +740,15 @@ void Analysis::showTisFlag()
         }
         *debug << "weapon " << w << ": target is " << str << endl; 
     }   
+}
+
+void Analysis::showBeacon()
+{
+    for(int w = 0; w < 3; ++w)
+    {
+        pair<int, int> p = beacon.at(w);
+        *debug << "beacon " << w << " x:" << p.first << ", y:" << p.second << endl;
+    }
 }
 
 //メイン関数

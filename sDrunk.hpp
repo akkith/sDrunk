@@ -7,6 +7,7 @@
 #include <cstring>
 #include <list>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
@@ -59,7 +60,7 @@ public:
   int getTurn();
   //ステージ情報をもらう
   void getField(int (*f)[stageHeight]);
-  vector<int> *getFieldRef();
+  vector<int> * getFieldRef();
   //侍一人の情報をもらう
   SamuraiState * getSamuraiRef(int team, int weapon);
   //侍の情報をもらう
@@ -114,6 +115,8 @@ class Analysis
   GameState beforeState;
   //マップの重要度
   vector<int> heatMap;
+  //ヒートマップ補助
+  vector<vector<int>> beforeHeatMaps;
   //各侍の移動目標
   vector< pair<int,int> > beacon;
   //目標になる熱量
@@ -132,7 +135,9 @@ class Analysis
   void update(GameState &gs);
   void setHeatMap(GameState &before, GameState &after);
   void setBeacon(GameState &gs);
+  void setSpearBeaon();
   void setAttackRange(GameState &gs);
+  void calcHeatMap();
   vector<bool> setKillzone(vector<SamuraiState> &aTeam,
                            vector<SamuraiState> &bTeam,
                            vector<bool> &tis);
@@ -142,11 +147,13 @@ class Analysis
               vector<bool> &tis);
   pair<int, int> getAction(int weapon);
   bool getDashFlag(int weapon);
-  void dropHeat(int heat, int x, int y);
+  void dropHeat(vector<int> &hMap,int heat, int x, int y);
+  bool checkEARange(int p);
 
   void showHeatMap();
   void showEnemyAttackRange();
   void showTisFlag();
+  void showBeacon();
 };
 
 //現在のゲーム状況を渡してコマンドを返す関数

@@ -3,6 +3,7 @@
  */
 
 #include "sDrunk.hpp"
+//#include "Search.hpp"
 #include "ScoreBoard.hpp"
 #include <string>
 #include <vector>
@@ -24,49 +25,49 @@ void showTime(int n)
 //命令番号を入れるとコストを返してくれる
 int costs[] = {0, 4, 4, 4, 4, 2, 2, 2, 2, 1};
 
-class GameSearch
-{
-  private:
-    double score;
-    GameState gs;
-    string command;
-    int cost;
-    vector< vector<int> > useCommand;
-    vector< pair<int,int> > beaconPoint;
+// class GameSearch
+// {
+//   private:
+//     double score;
+//     GameState gs;
+//     string command;
+//     int cost;
+//     vector< vector<int> > useCommand;
+//     vector< pair<int,int> > beaconPoint;
 
-  public:
-    GameSearch(GameState *gamestate, double sc, Analysis *analysis);
-    GameSearch(const GameSearch &gs);
-    GameState * getGameStateRef();
-    void setScore(double sc);
-    void addScore(double sc);
-    double getScore();
-    void setCommand(string cmd);
-    string getCommand();
-    void setCost(int n);
-    bool checkCost(int n);
-    bool isHidden(int team, int weapon);
-    bool checkAction(int team, int samurai, int n);
-    GameSearch doAction(int team, int samurai, int n);
-    void addCost(int n);
-    void addCommand(int n);
-    vector<int> *getAction(int weapon);
+//   public:
+//     GameSearch(GameState *gamestate, double sc, Analysis *analysis);
+//     GameSearch(const GameSearch &gs);
+//     GameState * getGameStateRef();
+//     void setScore(double sc);
+//     void addScore(double sc);
+//     double getScore();
+//     void setCommand(string cmd);
+//     string getCommand();
+//     void setCost(int n);
+//     bool checkCost(int n);
+//     bool isHidden(int team, int weapon);
+//     bool checkAction(int team, int samurai, int n);
+//     GameSearch doAction(int team, int samurai, int n);
+//     void addCost(int n);
+//     void addCommand(int n);
+//     vector<int> *getAction(int weapon);
 
-    GameSearch &operator=(const GameSearch &gSearch)
-    {
-        score = gSearch.score;
-        gs = gSearch.gs;
-        command = gSearch.command;
-        cost = gSearch.cost;
-        useCommand = gSearch.useCommand;
+//     GameSearch &operator=(const GameSearch &gSearch)
+//     {
+//         score = gSearch.score;
+//         gs = gSearch.gs;
+//         command = gSearch.command;
+//         cost = gSearch.cost;
+//         useCommand = gSearch.useCommand;
 
-        return *this;
-    }
+//         return *this;
+//     }
 
-    //デバッグ用
-    void debugStage();
-    void showCommand();
-};
+//     //デバッグ用
+//     void debugStage();
+//     void showCommand();
+// };
 
 bool compGameSearch(GameSearch a, GameSearch b)
 {
@@ -318,7 +319,10 @@ string getCommand(GameState *gs, Analysis *an)
         return "0 0";
     }
 
+    ScoreBoard sb;
+    reviseStatePoint(&lookedStates, an, &sb);
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
+    
     if (timerFlag)
     {
         showTime(2);
