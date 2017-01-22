@@ -22,6 +22,8 @@ extern ostream *debug;
 
 void rotate(int direction, int x0, int y0, int &x, int &y);
 
+int getDistance(pair<int,int> p1, pair<int,int> p2);
+
 struct SamuraiState
 {
   int homeX, homeY;
@@ -135,7 +137,7 @@ class Analysis
   void update(GameState &gs);
   void setHeatMap(GameState &before, GameState &after);
   void setBeacon(GameState &gs);
-  void setSpearBeaon();
+  void setSpearBeacon(GameState &gs);
   void setAttackRange(GameState &gs);
   void calcHeatMap();
   vector<bool> setKillzone(vector<SamuraiState> &aTeam,
@@ -148,6 +150,7 @@ class Analysis
   pair<int, int> getAction(int weapon);
   bool getDashFlag(int weapon);
   void dropHeat(vector<int> &hMap,int heat, int x, int y);
+  vector<pair<int,pair<int,int>>> searchHeat(pair<int,int> p, int range);
   bool checkEARange(int p);
 
   void showHeatMap();

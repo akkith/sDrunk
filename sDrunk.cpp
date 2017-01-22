@@ -79,6 +79,12 @@ static const int oy[3][7] = {
     {1, 2, 3, 4},
     {1, 2, 0, 1, 0},
     {-1, 0, 1, 1, 1, 0, -1}};
+//２点間のマンハッタン距離
+int getDistance(pair<int,int> p1, pair<int,int> p2)
+{
+    return abs(p1.first - p2.first) + abs(p1.second - p2.second);
+}
+
 
 //標準入力からの侍情報初期化
 void SamuraiState::initSamuraiState(int a, int w)
@@ -438,7 +444,7 @@ Analysis::Analysis()
 
     beacon.push_back( make_pair(7,7) );
     dashFlag.push_back(true);
-    targetHeat.push_back(3);
+    targetHeat.push_back(5);
 
     beacon.push_back( make_pair(4,10) );
     dashFlag.push_back(false);
@@ -458,6 +464,7 @@ void Analysis::update(GameState &gs)
         setHeatMap(beforeState, gs);
         setAttackRange(gs);
         setBeacon(gs);
+        setSpearBeacon(gs);
 
         showHeatMap();
         //showEnemyAttackRange();
@@ -536,7 +543,7 @@ void Analysis::setBeacon(GameState &gs)
         for(int y = 0; y < stageHeight; ++y)
         {
             int heat = heatMap.at(y * stageHeight + x);
-            for(int w = 0; w < 3; ++w)
+            for(int w = 1; w < 3; ++w)
             {
                 SamuraiState samurai = ss->at(w);
                 int tdist = abs(samurai.x - x) + abs(samurai.y - y);
@@ -553,12 +560,48 @@ void Analysis::setBeacon(GameState &gs)
 }
 
 //槍用ビーコン設定関数
-void Analysis::setSpearBeacon()
+void Analysis::setSpearBeacon(GameState &gs)
 {
+    SamuraiState *samurai = gs.getSamuraiRef(0, 0);
+    bool notFound = true;
+    int beaconHeat = 0;
+    int dist = stageHeight * stageWidth;
+    pair<int,int> tb = make_pair(-1,-1);
     //熱が５くらいあったら敵がいると思う
+    pair<int,int> start = make_pair(samurai->x,samurai->y);
+    vector<pair<int,pair<int,int>>> targets = searchHeat(start,6);
+    if(!targets.empty())
+    {
+        dashFlag.at(0) = false;
+    }
+    for(pair<int,pair<int,int>> target : targets)
+    {
+        int heat = target.first;
+        pair<int,int> point = target.second;
+        *debug << heat << " : " << point.first <<","<<point.second<<endl;
+        if(heat >= targetHeat.at(0) && heat >= beaconHeat)
+        {
+            int tdist = getDistance(start, point);
+            bool isNeer = tdist < dist;
+            bool canAttack = myAttackRange.at(point.second*stageHeight+point.first);
+            if( (isNeer || canAttack) && heat >= beaconHeat )
+            {
+                dist = tdist;
+                beaconHeat = heat;
+                tb = point;
+            }
+        }
+        else if(notFound)
+        {
+            tb = point;
+        }
+    }
     //高熱点が多すぎると正直どこいても不思議じゃない
     //敵の攻撃可能地点に踏み込まない
-    //攻撃方向を決めておいたほうが良さげ
+    if(tb != make_pair(-1,-1))
+    {
+        beacon.at(0) = tb;
+    }
 
 }
 
@@ -661,7 +704,7 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, int x, int y)
     vector<bool> looked(stageHeight*stageHeight, false);
     queue<pair<int, pair<int, int>>> que;
     que.push(seeker);
-    hMap.at(y * stageWidth + x) = heat;
+    hMap.at(y * stageWidth + x) += heat;
     looked.at(y * stageHeight + x) = true;
 
     while (!que.empty())
@@ -692,6 +735,50 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, int x, int y)
     }
 }
 
+vector<pair<int,pair<int,int>>> Analysis::searchHeat(pair<int,int> p, int range)
+{
+    vector<pair<int,pair<int,int>>> result;
+    int heat = heatMap.at(p.second * stageHeight + p.first);
+    pair<int,int> startP = p;
+    pair<int,pair<int,int>> seeker = make_pair(heat,p);
+    queue< pair<int,pair<int,int>> > que;
+    que.push(seeker);
+    
+    vector<bool> looked(stageHeight * stageWidth, false);
+    looked.at(p.second * stageHeight + p.first) = true;
+
+    while(!que.empty())
+    {
+        seeker = que.front();
+        que.pop();
+        int tHeat = seeker.first;
+        pair<int,int> tp = seeker.second;
+            if(tHeat >= heat && heat != 0)
+            {
+                result.push_back(seeker);
+                heat = tHeat;
+            }
+            
+            for(int i = 1; i <= 4; ++i)
+            {
+                int nx = tp.first + dx[i];
+                int ny = tp.second + dy[i];
+                if( 0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight
+                && getDistance(startP, make_pair(nx,ny)) <= range
+                && !looked.at(ny*stageHeight+nx))
+                {
+                    int nh = heatMap.at(ny*stageHeight+nx);
+                    pair<int,int> np = make_pair(nx,ny);
+                    pair<int, pair<int,int>> ns = make_pair(nh, np);
+                    que.push(ns);
+                    looked.at(ny*stageHeight+nx) = true;
+                }
+                
+            }        
+    }
+    return result;
+}
+
 bool Analysis::checkEARange(int p)
 {
     return enemyAttackRange.at(p);
@@ -706,6 +793,10 @@ void Analysis::showHeatMap()
         if ((i + 1) % stageWidth == 0)
         {
             *debug << endl;
+        }
+        else
+        {
+            *debug <<",";
         }
     }
 }
