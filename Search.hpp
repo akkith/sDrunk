@@ -24,7 +24,7 @@ class GameSearch
     bool checkCost(int n);
     bool isHidden(int team, int weapon);
     bool checkAction(int team, int samurai, int n);
-    GameSearch doAction(int team, int samurai, int n);
+    GameSearch doAction(int team, int samurai, int n, Analysis * an);
     void addCost(int n);
     void addCommand(int n);
     vector<int> *getAction(int weapon);

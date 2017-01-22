@@ -136,6 +136,7 @@ class Analysis
   Analysis();
   void update(GameState &gs);
   void setHeatMap(GameState &before, GameState &after);
+  int getHeat(int x, int y);
   void setBeacon(GameState &gs);
   void setSpearBeacon(GameState &gs);
   void setAttackRange(GameState &gs);

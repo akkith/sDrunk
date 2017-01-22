@@ -13,6 +13,8 @@ class ScoreBoard
     double hiddingScore[3];
     //目標座標への距離
     double moveScore[3];
+    //その他得点
+    double etcPoint[3];
     //各種倍率
     double mapValue[3];
     double samuraiValue[3];
@@ -31,18 +33,19 @@ class ScoreBoard
             samuraiScore[i] = 0;
             hiddingScore[i] = 0;
             moveScore[i] = 0;
+            etcPoint[i] = 0;
         }
-
+        //槍の設定
         mapValue[0] = 10;
         samuraiValue[0] = 100;
         hiddingValue[0] = 1;
         moveValue[0] = 1;
-
+        //刀の設定
         mapValue[1] = 10;
         samuraiValue[1] = 100;
         hiddingValue[1] = 1;
         moveValue[1] = 1;
-
+        //鉞の設定
         mapValue[2] = 10;
         samuraiValue[2] = 100;
         hiddingValue[2] = 1;
@@ -71,10 +74,16 @@ class ScoreBoard
         moveScore[weapon] = moScore;
     }
 
+    void addEtcPoint(int weapon, double point)
+    {
+        etcPoint[weapon] += point;
+    }
+
     double getTotalScore(int i) const
     {
         return (mapScore[i] * mapValue[i]) + (samuraiScore[i] * samuraiValue[i])
-             + (hiddingScore[i] * hiddingValue[i]) + (moveScore[i] * moveValue[i]);
+             + (hiddingScore[i] * hiddingValue[i]) + (moveScore[i] * moveValue[i])
+             + etcPoint[i];
     }
 
     double getDeadPenalty()
@@ -90,6 +99,7 @@ class ScoreBoard
             *debug << "mapScore : " << mapScore[i] << endl
                    << "SamuraiScore : " << samuraiScore[i] << endl
                    << "hiddingScore : " << hiddingScore[i] << endl
+                   << "Etc point : " << etcPoint[i] << endl
                    << "Total : " << getTotalScore(i) << endl
                    << endl;
         }
@@ -106,6 +116,7 @@ class ScoreBoard
 //行動可能か否か
 bool isValidAction(GameState *gs, int team, int weapon, int action);
 //シミュレーション
-void simulateAction(GameState *gs, int team, int weapon, int action, pair<int,int> bPoint, ScoreBoard *sb);
+void simulateAction(GameState *gs, int team, int weapon, int action,
+                    pair<int,int> bPoint, ScoreBoard *sb, Analysis *an);
 //盤面の得点の補正
 void reviseStatePoint(vector<GameSearch> *searchs, Analysis *an, ScoreBoard *sb);

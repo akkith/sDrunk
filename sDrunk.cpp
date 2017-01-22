@@ -530,6 +530,11 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
     calcHeatMap();
 }
 
+int Analysis::getHeat(int x, int y)
+{
+    return heatMap.at(y * stageHeight + x);
+}
+
 void Analysis::setBeacon(GameState &gs)
 {
     vector<SamuraiState> *ss = gs.getSamuraiStatesRef();

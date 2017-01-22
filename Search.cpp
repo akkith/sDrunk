@@ -184,12 +184,12 @@ bool GameSearch::checkAction(int team, int weapon, int n)
     return isValid;
 }
 
-GameSearch GameSearch::doAction(int team, int weapon, int n)
+GameSearch GameSearch::doAction(int team, int weapon, int n, Analysis *an)
 {
     GameSearch nextSearch = *this;
     ScoreBoard sb;
     //nextSearch.gs.moveSamurai(team, weapon, n);
-    simulateAction(nextSearch.getGameStateRef(), team, weapon, n, beaconPoint.at(weapon), &sb);
+    simulateAction(nextSearch.getGameStateRef(), team, weapon, n, beaconPoint.at(weapon), &sb, an);
     //double sc = evaluate(&(nextSearch.gs));
     double sc = sb.getTotalScore(weapon);
     nextSearch.addScore(sc);
@@ -229,7 +229,7 @@ void GameSearch::showCommand()
     *debug << "command : " << command << endl;
 }
 
-vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
+vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon, Analysis *an)
 {
     vector<GameSearch> result;
     GameSearch gSearch = states->front();
@@ -239,7 +239,7 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
     {
         if (gSearch.checkCost(9) && gSearch.checkAction(0, weapon, 9))
         {
-            GameSearch newGSearch = gSearch.doAction(0, weapon, 9);
+            GameSearch newGSearch = gSearch.doAction(0, weapon, 9, an);
             result.push_back(newGSearch);
             states->push(newGSearch);
         }
@@ -256,7 +256,7 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
             {
                 //*debug << "weapon : " << weapon << " action : " << n << endl;
-                GameSearch newGSearch = gSearch.doAction(0, weapon, n);
+                GameSearch newGSearch = gSearch.doAction(0, weapon, n, an);
                 result.push_back(newGSearch);
                 //newGSearch.showCommand();
                 states->push(newGSearch);
@@ -272,7 +272,7 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon)
         {
             if (tgs.checkCost(9) && tgs.checkAction(0, weapon, 9))
             {
-                GameSearch newGSearch = tgs.doAction(0, weapon, 9);
+                GameSearch newGSearch = tgs.doAction(0, weapon, 9, an);
                 hiddenState.push_back(newGSearch);
                 //states->push(newGSearch);
             }
@@ -306,7 +306,7 @@ string getCommand(GameState *gs, Analysis *an)
         GameSearch tSearch = firstState;
         tSearch.addCommand(weapon);
         states.push(tSearch);
-        vector<GameSearch> tv = createPattern(&states, weapon);
+        vector<GameSearch> tv = createPattern(&states, weapon, an);
         lookedStates.insert(lookedStates.end(), tv.begin(), tv.end());
     }
 

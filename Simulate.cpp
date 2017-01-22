@@ -99,7 +99,7 @@ void turnUpdate(GameState * gs)
 }
 
 //攻撃のシミュレーション
-void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
+void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb, Analysis * an)
 {
     //侍の座標
     int samuraiX, samuraiY;
@@ -107,6 +107,7 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
     samuraiY = samurai->y;
     double nuriCnt = 0;
     double koCnt = 0;
+    double etcScore = 0;
     //武器に合わせた攻撃マス数
     int attackSize = osize[samurai->weapon];
     for (int i = 0; i < attackSize; ++i)
@@ -147,6 +148,7 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
             if(field->at(attackY * stageHeight + attackX) >= 3)
             {
                 ++nuriCnt;
+                etcScore += an->getHeat(attackX, attackY);
             }
             field->at(attackY * stageHeight + attackX) = samurai->weapon;
             
@@ -155,9 +157,11 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb)
 
     sb->setMapScore(samurai->weapon, nuriCnt);
     sb->setSamuraiScore(samurai->weapon, koCnt);
+    sb->addEtcPoint(samurai->weapon, etcScore);
 }
 
-void simulateAction(GameState *gs, int team, int weapon, int action, pair<int,int> bPoint, ScoreBoard * sb)
+void simulateAction(GameState *gs, int team, int weapon, int action,
+                    pair<int,int> bPoint, ScoreBoard * sb, Analysis * an)
 {
     double hiddingScore = 0;
     //double diff = 0;
@@ -179,7 +183,7 @@ void simulateAction(GameState *gs, int team, int weapon, int action, pair<int,in
     case 3:
     case 4:
         //攻撃
-        doAttack(gs, samurai, action, sb);
+        doAttack(gs, samurai, action, sb, an);
         break;
     case 5:
     case 6:
