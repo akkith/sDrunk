@@ -63,6 +63,8 @@ public:
   //ステージ情報をもらう
   void getField(int (*f)[stageHeight]);
   vector<int> * getFieldRef();
+  //ステージの色をもらう
+  int getFieldColor(int p);
   //侍一人の情報をもらう
   SamuraiState * getSamuraiRef(int team, int weapon);
   //侍の情報をもらう
@@ -150,7 +152,7 @@ class Analysis
               vector<bool> &tis);
   pair<int, int> getAction(int weapon);
   bool getDashFlag(int weapon);
-  void dropHeat(vector<int> &hMap,int heat, int x, int y);
+  void dropHeat(vector<int> &hMap,int heat, vector<pair<int,int>> points);
   vector<pair<int,pair<int,int>>> searchHeat(pair<int,int> p, int range);
   bool checkEARange(int p);
 

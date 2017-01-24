@@ -119,6 +119,7 @@ GameSearch::GameSearch(GameState *gamestate, double sc, Analysis *analysis)
         {
             useCommand.at(i).push_back(8);   
         }
+
     }
 }
 
@@ -320,7 +321,7 @@ string getCommand(GameState *gs, Analysis *an)
     }
 
     ScoreBoard sb;
-    reviseStatePoint(&lookedStates, an, &sb);
+    reviseStatePoint(lookedStates, an, &sb);
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
     
     if (timerFlag)

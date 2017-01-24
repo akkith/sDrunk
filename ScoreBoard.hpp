@@ -37,21 +37,21 @@ class ScoreBoard
         }
         //槍の設定
         mapValue[0] = 10;
-        samuraiValue[0] = 100;
+        samuraiValue[0] = 200;
         hiddingValue[0] = 1;
         moveValue[0] = 1;
         //刀の設定
         mapValue[1] = 10;
-        samuraiValue[1] = 100;
+        samuraiValue[1] = 200;
         hiddingValue[1] = 1;
-        moveValue[1] = 1;
+        moveValue[1] = 6;
         //鉞の設定
         mapValue[2] = 10;
-        samuraiValue[2] = 100;
+        samuraiValue[2] = 200;
         hiddingValue[2] = 1;
-        moveValue[2] = 1;
+        moveValue[2] = 6;
 
-        deadPenalty = -1000;
+        deadPenalty = -100;
     }
     
     void setMapScore(int weapon, double mScore)
@@ -119,4 +119,4 @@ bool isValidAction(GameState *gs, int team, int weapon, int action);
 void simulateAction(GameState *gs, int team, int weapon, int action,
                     pair<int,int> bPoint, ScoreBoard *sb, Analysis *an);
 //盤面の得点の補正
-void reviseStatePoint(vector<GameSearch> *searchs, Analysis *an, ScoreBoard *sb);
+void reviseStatePoint(vector<GameSearch> &searchs, Analysis *an, ScoreBoard *sb);

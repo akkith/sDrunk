@@ -7,9 +7,9 @@
 //#include "Search.hpp"
 #include "ScoreBoard.hpp"
 
-void reviseStatePoint(vector<GameSearch> *searchs, Analysis *an, ScoreBoard *sb)
+void reviseStatePoint(vector<GameSearch> &searchs, Analysis *an, ScoreBoard *sb)
 {
-    for(GameSearch ts : *searchs)
+    for(GameSearch &ts : searchs)
     {
         vector<SamuraiState> *ss = ts.getGameStateRef()->getSamuraiStatesRef();
         for(int w = 0; w < 3; ++w)

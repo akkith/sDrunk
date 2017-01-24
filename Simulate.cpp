@@ -132,7 +132,7 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb,
                     {
                         isHome |= true;
                     }
-                    if (attackX == ss->x && attackY == ss->y)
+                    if (attackX == ss->x && attackY == ss->y && !isHome)
                     {
                         //onEnemy |= true;
                         ++koCnt;
