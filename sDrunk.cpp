@@ -481,6 +481,7 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
 {
     //変更点の入れ物
     vector<vector<pair<int,int>>> points(3);
+    int movedSamurai = 0;
 
     //最近行動した侍の情報を初期化
     vector<SamuraiState> *beforeSS = before.getSamuraiStatesRef();
@@ -507,15 +508,15 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
 
     if (unequals.size() == 1)
     {
-        int num = unequals.at(0);
-        beforeHeatMaps.at(num) = vector<int>(stageHeight * stageWidth, 0);
-        *debug << "une::reset " << num << endl;
+        movedSamurai = unequals.at(0);
+        beforeHeatMaps.at(movedSamurai) = vector<int>(stageHeight * stageWidth, 0);
+        *debug << "une::reset " << movedSamurai << endl;
     }
     else
     {
-        int num = equals.at(0);
-        beforeHeatMaps.at(num) = vector<int>(stageHeight * stageWidth, 0);
-        *debug << "e::reset " << num << endl;
+        movedSamurai = equals.at(0);
+        beforeHeatMaps.at(movedSamurai) = vector<int>(stageHeight * stageWidth, 0);
+        *debug << "e::reset " << movedSamurai << endl;
     }
     //vector<int> hMap(stageHeight*stageWidth, 0);
     //マップ情報
@@ -563,7 +564,8 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
             y = bSamurai.y;
             samuraiHeat = 3;
         }
-        else if (samurai.hidden == 0 && !(samurai.x == samurai.homeX && samurai.y == samurai.homeY))
+        else if (samurai.hidden == 0 && !(samurai.x == samurai.homeX && samurai.y == samurai.homeY)
+                && (bSamurai.x == -1 || movedSamurai == samurai.weapon))
         {
             x = samurai.x;
             y = samurai.y;
