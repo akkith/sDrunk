@@ -150,8 +150,7 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb,
                 ++nuriCnt;
                 etcScore += an->getHeat(attackX, attackY);
             }
-            field->at(attackY * stageHeight + attackX) = samurai->weapon;
-            
+            field->at(attackY * stageHeight + attackX) = samurai->weapon;  
         }
     }
 

@@ -6,6 +6,7 @@
 
 int playOrder;
 ostream *debug;
+bool debugFlag = true;
 
 char getChar()
 {
@@ -97,10 +98,13 @@ void SamuraiState::initSamuraiState(int a, int w)
     done = getInt();
     hidden = getInt();
     recovery = getInt();
-    *debug << "# Samurai with weapon " << weapon << "@(" << x << "," << y << ")"
-           << " Done: " << done
-           << " Hidden: " << hidden
-           << " Recovery: " << recovery << endl;
+    if (debugFlag)
+    {
+        *debug << "# Samurai with weapon " << weapon << "@(" << x << "," << y << ")"
+               << " Done: " << done
+               << " Hidden: " << hidden
+               << " Recovery: " << recovery << endl;
+    }
 }
 
 //侍の攻撃被弾時の挙動
@@ -149,8 +153,10 @@ void GameState::readTurnInfo()
 {
     //今のターンを取得
     turn = getInt();
-    *debug << "read turn" << endl;
-
+    if (debugFlag)
+    {
+        *debug << "read turn" << endl;
+    }
     //侍情報を取得
     for (int i = 0; i < 2; ++i)
     {
@@ -162,7 +168,10 @@ void GameState::readTurnInfo()
             //setSamuraiState(i ,w, &samurai);
         }
     }
-    *debug << "read samurai" << endl;
+    if (debugFlag)
+    {
+        *debug << "read samurai" << endl;
+    }
     //フィールド状況取得
     for (int y = 0; y != stageHeight; y++)
     {
@@ -171,7 +180,10 @@ void GameState::readTurnInfo()
             field[y * stageHeight + x] = getInt();
         }
     }
-    *debug << "read fields" << endl;
+    if (debugFlag)
+    {
+        *debug << "read fields" << endl;
+    }
 }
 
 int GameState::getTurn()
@@ -305,7 +317,10 @@ bool GameState::isValidAction(const int team, const int wepon, const int action)
         }
         return true;
     default:
-        *debug << "Invalid action " << action << " tried" << endl;
+        if (debugFlag)
+        {
+            *debug << "Invalid action " << action << " tried" << endl;
+        }
         exit(1);
     }
 }
@@ -446,15 +461,25 @@ Analysis::Analysis()
     myAttackRange = vector<bool>(stageHeight * stageWidth, false);
     tisFlag = vector<bool>(3, false);
 
-    beacon.push_back(make_pair(7, 7));
+    if (playOrder == 0)
+    {
+        beacon.push_back(make_pair(7, 7));
+        beacon.push_back(make_pair(3, 10));
+        beacon.push_back(make_pair(7, 7));
+    }
+    else
+    {
+        beacon.push_back(make_pair(7, 7));
+        beacon.push_back(make_pair(11, 3));
+        beacon.push_back(make_pair(7, 7));
+    }
+
     dashFlag.push_back(true);
     targetHeat.push_back(5);
 
-    beacon.push_back(make_pair(4, 10));
     dashFlag.push_back(false);
     targetHeat.push_back(3);
 
-    beacon.push_back(make_pair(4, 4));
     dashFlag.push_back(false);
     targetHeat.push_back(3);
 }
@@ -480,7 +505,7 @@ void Analysis::update(GameState &gs)
 void Analysis::setHeatMap(GameState &before, GameState &after)
 {
     //変更点の入れ物
-    vector<vector<pair<int,int>>> points(3);
+    vector<vector<pair<int, int>>> points(3);
     int movedSamurai = 0;
 
     //最近行動した侍の情報を初期化
@@ -492,9 +517,9 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
     {
         SamuraiState beforeS = beforeSS->at(w);
         SamuraiState afterS = afterSS->at(w);
-        if(afterS.recovery > 0)
+        if (afterS.recovery > 0)
         {
-            beforeHeatMaps.at(w-3) = vector<int>(stageHeight * stageWidth, 0);
+            beforeHeatMaps.at(w - 3) = vector<int>(stageHeight * stageWidth, 0);
         }
         if (beforeS.done != afterS.done)
         {
@@ -510,13 +535,11 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
     {
         movedSamurai = unequals.at(0);
         beforeHeatMaps.at(movedSamurai) = vector<int>(stageHeight * stageWidth, 0);
-        *debug << "une::reset " << movedSamurai << endl;
     }
     else
     {
         movedSamurai = equals.at(0);
         beforeHeatMaps.at(movedSamurai) = vector<int>(stageHeight * stageWidth, 0);
-        *debug << "e::reset " << movedSamurai << endl;
     }
     //vector<int> hMap(stageHeight*stageWidth, 0);
     //マップ情報
@@ -535,15 +558,15 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
             {
                 //dropHeat(hMap, 2, x, y);
                 int weapon = a - 3;
-                points.at(weapon).push_back(make_pair(x,y));
+                points.at(weapon).push_back(make_pair(x, y));
                 //dropHeat(beforeHeatMaps.at(weapon), 2, x, y);
             }
         }
     }
 
-    for(int w = 0; w < 3; ++w)
+    for (int w = 0; w < 3; ++w)
     {
-        if(points.at(w).size()>=1)
+        if (points.at(w).size() >= 1)
         {
             dropHeat(beforeHeatMaps.at(w), 2, points.at(w));
         }
@@ -562,14 +585,13 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         {
             x = bSamurai.x;
             y = bSamurai.y;
-            samuraiHeat = 3;
+            samuraiHeat = 6;
         }
-        else if (samurai.hidden == 0 && !(samurai.x == samurai.homeX && samurai.y == samurai.homeY)
-                && (bSamurai.x == -1 || movedSamurai == samurai.weapon))
+        else if (samurai.hidden == 0 && !(samurai.x == samurai.homeX && samurai.y == samurai.homeY) && (bSamurai.x == -1 || movedSamurai == samurai.weapon))
         {
             x = samurai.x;
             y = samurai.y;
-            samuraiHeat = 6;
+            samuraiHeat = 5;
         }
         else
         {
@@ -579,7 +601,7 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         if (x != -1 && y != -1 && samurai.recovery == 0)
         {
             //dropHeat(hMap, samuraiHeat, x, y);
-            vector<pair<int,int>> tp = {make_pair(x,y)};
+            vector<pair<int, int>> tp = {make_pair(x, y)};
             dropHeat(beforeHeatMaps.at(samurai.weapon), samuraiHeat, tp);
         }
     }
@@ -612,7 +634,6 @@ void Analysis::setBeacon(GameState &gs)
                 int theat = abs(heat - targetHeat.at(w));
                 if (heat != 0 && theat <= diff[w] && tdist <= dist[w] && (!enemyAttackRange.at(y * stageHeight + x) || tisFlag.at(w)))
                 {
-                    *debug << x << "," << y << endl;
                     beacon.at(w) = make_pair(x, y);
                     dashFlag.at(w) = false;
                     if (tdist < dist[w])
@@ -640,15 +661,25 @@ void Analysis::setSpearBeacon(GameState &gs)
     //熱が５くらいあったら敵がいると思う
     pair<int, int> start = make_pair(samurai->x, samurai->y);
     vector<pair<int, pair<int, int>>> targets = searchHeat(start, 6);
-    if (!targets.empty())
+    
+    if(targets.empty())
+    {
+        targets = searchHeat(start, 10);
+    }
+    if (!targets.empty() || samurai->recovery > 0)
     {
         dashFlag.at(0) = false;
     }
+
     for (pair<int, pair<int, int>> target : targets)
     {
         int heat = target.first;
         pair<int, int> point = target.second;
-        *debug << heat << " : " << point.first << "," << point.second << endl;
+        if(debugFlag)
+        {
+            *debug << "Spears Beacon" << endl
+                   << heat << " : " << point.first << "," << point.second << endl;
+        }
         if (heat >= targetHeat.at(0) && heat >= beaconHeat)
         {
             int tdist = getDistance(start, point);
@@ -672,6 +703,10 @@ void Analysis::setSpearBeacon(GameState &gs)
     if (tb != make_pair(-1, -1))
     {
         beacon.at(0) = tb;
+    }
+    else if(beacon.at(0) == make_pair(samurai->x,samurai->y))
+    {
+        beacon.at(0) = make_pair(-1,-1);
     }
 }
 
@@ -767,14 +802,14 @@ bool Analysis::getDashFlag(int weapon)
     return dashFlag.at(weapon);
 }
 
-void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int,int>> points)
+void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> points)
 {
     pair<int, int> point;
     pair<int, pair<int, int>> seeker;
     vector<bool> looked(stageHeight * stageHeight, false);
     queue<pair<int, pair<int, int>>> que;
-    
-    for(pair<int,int> p : points)
+
+    for (pair<int, int> p : points)
     {
         point = p;
         seeker = make_pair(heat, point);
@@ -782,12 +817,17 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int,int>> point
         hMap.at(point.second * stageWidth + point.first) += heat;
         looked.at(point.second * stageHeight + point.first) = true;
     }
+    if(heat < 0)
+    {
+        return;
+    }
 
     while (!que.empty())
     {
         seeker = que.front();
         que.pop();
-        int tHeat = seeker.first - 1;
+        //int tHeat = seeker.first - 1;
+        int tHeat = seeker.first / 2;
         point = seeker.second;
         if (tHeat <= 0)
         {
@@ -799,10 +839,9 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int,int>> point
             int nx = point.first + dx[i];
             int ny = point.second + dy[i];
             int np = ny * stageHeight + nx;
-            //*debug << "nx : " << nx << ", ny : " << ny << endl;
+            
             if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
             {
-                //heatMap.at(np) += tHeat;
                 hMap.at(np) += tHeat;
                 looked.at(np) = true;
                 que.push(make_pair(tHeat, make_pair(nx, ny)));
@@ -829,7 +868,7 @@ vector<pair<int, pair<int, int>>> Analysis::searchHeat(pair<int, int> p, int ran
         que.pop();
         int tHeat = seeker.first;
         pair<int, int> tp = seeker.second;
-        if (tHeat >= heat && heat != 0)
+        if (tHeat >= heat && tHeat != 0)
         {
             result.push_back(seeker);
             heat = tHeat;
@@ -939,11 +978,15 @@ int main(int argc, char *argv[])
     {
         gState.readTurnInfo();
         analysis.update(gState);
-        *debug << "Turn : " << gState.getTurn() << endl;
-
+        if(debugFlag)
+        {
+            *debug << "Turn : " << gState.getTurn() << endl;
+        }
         string command = getCommand(&gState, &analysis);
-
-        *debug << "================= command : " << command << " =========================" << endl;
+        if(debugFlag)
+        {
+            *debug << "================= command : " << command << " =========================" << endl;
+        }
         cout << command << endl;
     }
 }

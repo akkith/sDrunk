@@ -37,9 +37,9 @@ class ScoreBoard
         }
         //槍の設定
         mapValue[0] = 10;
-        samuraiValue[0] = 200;
+        samuraiValue[0] = 2000;
         hiddingValue[0] = 1;
-        moveValue[0] = 1;
+        moveValue[0] = 2;
         //刀の設定
         mapValue[1] = 10;
         samuraiValue[1] = 200;
@@ -49,7 +49,7 @@ class ScoreBoard
         mapValue[2] = 10;
         samuraiValue[2] = 200;
         hiddingValue[2] = 1;
-        moveValue[2] = 6;
+        moveValue[2] = 11;
 
         deadPenalty = -100;
     }

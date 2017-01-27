@@ -25,50 +25,6 @@ void showTime(int n)
 //命令番号を入れるとコストを返してくれる
 int costs[] = {0, 4, 4, 4, 4, 2, 2, 2, 2, 1};
 
-// class GameSearch
-// {
-//   private:
-//     double score;
-//     GameState gs;
-//     string command;
-//     int cost;
-//     vector< vector<int> > useCommand;
-//     vector< pair<int,int> > beaconPoint;
-
-//   public:
-//     GameSearch(GameState *gamestate, double sc, Analysis *analysis);
-//     GameSearch(const GameSearch &gs);
-//     GameState * getGameStateRef();
-//     void setScore(double sc);
-//     void addScore(double sc);
-//     double getScore();
-//     void setCommand(string cmd);
-//     string getCommand();
-//     void setCost(int n);
-//     bool checkCost(int n);
-//     bool isHidden(int team, int weapon);
-//     bool checkAction(int team, int samurai, int n);
-//     GameSearch doAction(int team, int samurai, int n);
-//     void addCost(int n);
-//     void addCommand(int n);
-//     vector<int> *getAction(int weapon);
-
-//     GameSearch &operator=(const GameSearch &gSearch)
-//     {
-//         score = gSearch.score;
-//         gs = gSearch.gs;
-//         command = gSearch.command;
-//         cost = gSearch.cost;
-//         useCommand = gSearch.useCommand;
-
-//         return *this;
-//     }
-
-//     //デバッグ用
-//     void debugStage();
-//     void showCommand();
-// };
-
 bool compGameSearch(GameSearch a, GameSearch b)
 {
     return a.getScore() > b.getScore();
@@ -93,10 +49,12 @@ GameSearch::GameSearch(GameState *gamestate, double sc, Analysis *analysis)
         {
             useCommand.at(i).push_back(n);
         }
-        if(samurai.y == -1)
+
+        if(beacon.second == -1)
         {
             useCommand.at(i).push_back(5);
             useCommand.at(i).push_back(7);
+            beaconPoint.at(i).second = samurai.y;
         }
         else if(samurai.y < beacon.second)
         {
@@ -106,16 +64,18 @@ GameSearch::GameSearch(GameState *gamestate, double sc, Analysis *analysis)
         {
             useCommand.at(i).push_back(7);   
         }
-        if(samurai.x == -1)
+
+        if(beacon.first == -1)
         {
             useCommand.at(i).push_back(6);
             useCommand.at(i).push_back(8);
+            beaconPoint.at(i).first = samurai.x;
         }
         else if(samurai.x < beacon.first)
         {
             useCommand.at(i).push_back(6);   
         }
-        else if(samurai.x > beacon.second)
+        else if(samurai.x > beacon.first)
         {
             useCommand.at(i).push_back(8);   
         }
@@ -245,12 +205,20 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon, Analysis
             states->push(newGSearch);
         }
     }
-    
+    vector<int> *actions = gSearch.getAction(weapon);
+    // if(weapon == 0)
+    // {
+    //     *debug << "actions" << endl;
+    //     for(int n : *actions)
+    //     {
+    //         *debug << n << endl;
+    //     }
+    // }
     while (!states->empty())
     {
         gSearch = states->front();
         states->pop();
-        vector<int> *actions = gSearch.getAction(weapon);
+        
         for (int n : *actions)
         {
             //*debug << "weapon : " << weapon << " n : " << n << endl;
@@ -323,6 +291,14 @@ string getCommand(GameState *gs, Analysis *an)
     ScoreBoard sb;
     reviseStatePoint(lookedStates, an, &sb);
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
+
+    if(gs->getTurn() == 31)
+    {
+        for(GameSearch gSearch : lookedStates)
+        {
+            *debug << gSearch.getScore() << ":" << gSearch.getCommand() << endl;
+        }
+    }
     
     if (timerFlag)
     {
