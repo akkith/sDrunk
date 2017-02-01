@@ -39,15 +39,15 @@ class ScoreBoard
         mapValue[0] = 10;
         samuraiValue[0] = 2000;
         hiddingValue[0] = 1;
-        moveValue[0] = 2;
+        moveValue[0] = 6;
         //刀の設定
         mapValue[1] = 10;
-        samuraiValue[1] = 200;
+        samuraiValue[1] = 2000;
         hiddingValue[1] = 1;
         moveValue[1] = 6;
         //鉞の設定
         mapValue[2] = 10;
-        samuraiValue[2] = 200;
+        samuraiValue[2] = 2000;
         hiddingValue[2] = 1;
         moveValue[2] = 11;
 

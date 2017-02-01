@@ -34,7 +34,7 @@ bool onOtherSamurai(GameState *gs, SamuraiState *samurai, int nx, int ny)
     vector<SamuraiState> *sState = gs->getSamuraiStatesRef();
     for (SamuraiState ss : *sState)
     {
-        if (*samurai != ss && ss.x == nx && ss.y == ny)
+        if (*samurai != ss && ss.x == nx && ss.y == ny && ss.hidden == 0)
         {
             result |= true;
         }
@@ -148,7 +148,12 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb,
             if(field->at(attackY * stageHeight + attackX) >= 3)
             {
                 ++nuriCnt;
-                etcScore += an->getHeat(attackX, attackY);
+                int heat = an->getHeat(attackX, attackY);
+                if(heat >= 5)
+                {
+                    koCnt += 0.5;
+                }
+                etcScore += heat;
             }
             field->at(attackY * stageHeight + attackX) = samurai->weapon;  
         }

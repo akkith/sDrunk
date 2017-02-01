@@ -117,6 +117,10 @@ class Analysis
   private:
   //前ターンのゲーム情報
   GameState beforeState;
+  //覚えている範囲の盤面
+  vector<int> lookedField;
+  //ざっくりとした盤面の塗られぐわい
+  vector<int> pressedField;
   //マップの重要度
   vector<int> heatMap;
   //ヒートマップ補助
@@ -132,15 +136,18 @@ class Analysis
   //敵が一手で攻撃できるエリア
   vector<bool> enemyAttackRange;
   //味方が一手で攻撃できるエリア
-  vector<bool> myAttackRange;
+  vector<vector<bool>> myAttackRange;
 
   public:
   Analysis();
   void update(GameState &gs);
+  void setLookedField(GameState &gs);
+  void setPressedField(GameState &gs);
   void setHeatMap(GameState &before, GameState &after);
   int getHeat(int x, int y);
   void setBeacon(GameState &gs);
   void setSpearBeacon(GameState &gs);
+  void setSwordBeacon(GameState &gs);
   void setAttackRange(GameState &gs);
   void calcHeatMap();
   vector<bool> setKillzone(vector<SamuraiState> &aTeam,
@@ -150,6 +157,7 @@ class Analysis
               vector<SamuraiState> &bTeam,
               int x, int y, int ax, int ay,
               vector<bool> &tis);
+  pair<int,int> getNuriPoint(pair<int,int> point);
   pair<int, int> getAction(int weapon);
   bool getDashFlag(int weapon);
   void dropHeat(vector<int> &hMap,int heat, vector<pair<int,int>> points);

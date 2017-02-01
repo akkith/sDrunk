@@ -292,7 +292,7 @@ string getCommand(GameState *gs, Analysis *an)
     reviseStatePoint(lookedStates, an, &sb);
     sort(lookedStates.begin(), lookedStates.end(), compGameSearch);
 
-    if(gs->getTurn() == 31)
+    if(gs->getTurn() == 36)
     {
         for(GameSearch gSearch : lookedStates)
         {

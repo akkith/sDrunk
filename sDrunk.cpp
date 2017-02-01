@@ -453,31 +453,37 @@ Analysis::Analysis()
 {
     //heatMap.resize(stageHeight * stageWidth);
     heatMap = vector<int>(stageHeight * stageWidth, 0);
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 6; ++i)
     {
         beforeHeatMaps.push_back(heatMap);
     }
+    lookedField = vector<int>(stageWidth * stageHeight, 8);
+    pressedField = vector<int>(3 * 3, 0);
     enemyAttackRange = vector<bool>(stageHeight * stageWidth, false);
-    myAttackRange = vector<bool>(stageHeight * stageWidth, false);
+    myAttackRange.resize(3);
+    for (int i = 0; i < 3; ++i)
+    {
+        myAttackRange.at(i) = vector<bool>(stageHeight * stageWidth, false);
+    }
     tisFlag = vector<bool>(3, false);
 
     if (playOrder == 0)
     {
         beacon.push_back(make_pair(7, 7));
-        beacon.push_back(make_pair(3, 10));
+        beacon.push_back(make_pair(0, 11));
         beacon.push_back(make_pair(7, 7));
     }
     else
     {
         beacon.push_back(make_pair(7, 7));
-        beacon.push_back(make_pair(11, 3));
+        beacon.push_back(make_pair(14, 3));
         beacon.push_back(make_pair(7, 7));
     }
 
     dashFlag.push_back(true);
     targetHeat.push_back(5);
 
-    dashFlag.push_back(false);
+    dashFlag.push_back(true);
     targetHeat.push_back(3);
 
     dashFlag.push_back(false);
@@ -487,12 +493,16 @@ Analysis::Analysis()
 //前ターンの情報と今ターンの情報を比較し目標座標を設定
 void Analysis::update(GameState &gs)
 {
+    setLookedField(gs);
     if (gs.getTurn() > 1)
     {
+        setLookedField(gs);
+        setPressedField(gs);
         setHeatMap(beforeState, gs);
         setAttackRange(gs);
         setBeacon(gs);
         setSpearBeacon(gs);
+        setSwordBeacon(gs);
 
         showHeatMap();
         //showEnemyAttackRange();
@@ -500,6 +510,79 @@ void Analysis::update(GameState &gs)
         showBeacon();
     }
     beforeState = gs;
+}
+
+void Analysis::setLookedField(GameState &gs)
+{
+    vector<int> *field = gs.getFieldRef();
+    for (int i = 0; i < (int)field->size(); ++i)
+    {
+        int col = field->at(i);
+        if (col != 9)
+        {
+            lookedField.at(i) = col;
+        }
+    }
+}
+
+void Analysis::setPressedField(GameState &gs)
+{
+    //フィールドを3*3のまとまりで区切ってその中の自分のマス色を数える
+    pressedField = vector<int>(3 * 3, 0);
+    vector<int> pressedAssist(3 * 3, 0);
+    for (int x = 0; x < stageWidth; ++x)
+    {
+        for (int y = 0; y < stageHeight; ++y)
+        {
+            int col = lookedField.at(y * stageHeight + x);
+            if (3 <= col)
+            {
+                int nx = x / 5;
+                int ny = y / 5;
+                pressedField.at(ny * 3 + nx) += 1;
+            }
+        }
+    }
+    for(int i = 0; i < 3*3; ++i)
+    {
+        *debug << pressedField.at(i) << " ";
+        if(i != 0 && i % 3 == 2)
+        {
+            *debug << endl;
+        }
+        
+    }
+    for (int x = 0; x < 3; ++x)
+    {
+        for (int y = 0; y < 3; ++y)
+        {
+            for (int i = 1; i < 5; ++i)
+            {
+                int nx = x + dx[i];
+                int ny = y + dy[i];
+                int np = ny * 3 + nx;
+                if (0 <= nx && nx < 3 && 0 <= ny && ny < 3)
+                {
+                    pressedAssist.at(y * 3 + x) += pressedField.at(np);
+                }
+            }
+        }
+    }
+    for(int i = 0; i < 3*3; ++i)
+    {
+        *debug << pressedAssist.at(i) << " ";
+        if(i != 0 && i % 3 == 2)
+        {
+            *debug << endl;
+        }
+        
+    }
+
+    for (int i = 0; i < 3 * 3; ++i)
+    {
+        pressedField.at(i) += pressedAssist.at(i);
+    }
+    
 }
 
 void Analysis::setHeatMap(GameState &before, GameState &after)
@@ -585,13 +668,15 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         {
             x = bSamurai.x;
             y = bSamurai.y;
-            samuraiHeat = 6;
+            samuraiHeat = 5;
+            vector<pair<int, int>> tp = {make_pair(x, y)};
+            dropHeat(beforeHeatMaps.at(samurai.weapon), -1, tp);
         }
         else if (samurai.hidden == 0 && !(samurai.x == samurai.homeX && samurai.y == samurai.homeY) && (bSamurai.x == -1 || movedSamurai == samurai.weapon))
         {
             x = samurai.x;
             y = samurai.y;
-            samuraiHeat = 5;
+            samuraiHeat = 6;
         }
         else
         {
@@ -627,7 +712,7 @@ void Analysis::setBeacon(GameState &gs)
         for (int y = 0; y < stageHeight; ++y)
         {
             int heat = heatMap.at(y * stageHeight + x);
-            for (int w = 1; w < 3; ++w)
+            for (int w = 2; w < 3; ++w)
             {
                 SamuraiState samurai = ss->at(w);
                 int tdist = abs(samurai.x - x) + abs(samurai.y - y);
@@ -653,6 +738,10 @@ void Analysis::setBeacon(GameState &gs)
 //槍用ビーコン設定関数
 void Analysis::setSpearBeacon(GameState &gs)
 {
+    if(gs.getTurn() < 6)
+    {
+        return;
+    }
     SamuraiState *samurai = gs.getSamuraiRef(0, 0);
     bool notFound = true;
     int beaconHeat = 0;
@@ -661,8 +750,8 @@ void Analysis::setSpearBeacon(GameState &gs)
     //熱が５くらいあったら敵がいると思う
     pair<int, int> start = make_pair(samurai->x, samurai->y);
     vector<pair<int, pair<int, int>>> targets = searchHeat(start, 6);
-    
-    if(targets.empty())
+
+    if (targets.empty() && gs.getTurn() < 18)
     {
         targets = searchHeat(start, 10);
     }
@@ -675,16 +764,16 @@ void Analysis::setSpearBeacon(GameState &gs)
     {
         int heat = target.first;
         pair<int, int> point = target.second;
-        if(debugFlag)
-        {
-            *debug << "Spears Beacon" << endl
-                   << heat << " : " << point.first << "," << point.second << endl;
-        }
+        // if (debugFlag)
+        // {
+        //     *debug << "Spears Beacon" << endl
+        //            << heat << " : " << point.first << "," << point.second << endl;
+        // }
         if (heat >= targetHeat.at(0) && heat >= beaconHeat)
         {
             int tdist = getDistance(start, point);
             bool isNeer = tdist < dist;
-            bool canAttack = myAttackRange.at(point.second * stageHeight + point.first);
+            bool canAttack = myAttackRange.at(0).at(point.second * stageHeight + point.first);
             int color = gs.getFieldColor(point.second * stageHeight + point.first);
             if ((isNeer || canAttack) && heat >= beaconHeat && 3 <= color)
             {
@@ -704,9 +793,97 @@ void Analysis::setSpearBeacon(GameState &gs)
     {
         beacon.at(0) = tb;
     }
-    else if(beacon.at(0) == make_pair(samurai->x,samurai->y))
+    else if (beacon.at(0) == make_pair(samurai->x, samurai->y))
     {
-        beacon.at(0) = make_pair(-1,-1);
+        beacon.at(0) = make_pair(-1, -1);
+    }
+}
+//刀用ビーコン設定関数
+void Analysis::setSwordBeacon(GameState &gs)
+{
+    if(gs.getTurn() < 6)
+    {
+        return;   
+    }
+    SamuraiState *samurai = gs.getSamuraiRef(0, 1);
+    bool notFound = true;
+    int dist = stageHeight * stageWidth;
+    pair<int, int> tb = make_pair(-1, -1);
+    //熱が５くらいあったら敵がいると思う
+    pair<int, int> start = make_pair(samurai->x, samurai->y);
+    vector<pair<int, pair<int, int>>> targets = searchHeat(start, 7);
+
+    //周りに敵がいそうな場所を調べる
+    for (pair<int, pair<int, int>> target : targets)
+    {
+        int heat = target.first;
+        pair<int, int> point = target.second;
+        if (heat >= 5 && lookedField.at(point.second*stageHeight+point.first) > 2)
+        {
+            notFound = false;
+            int tDist = abs(start.first - point.first) + abs(start.second - point.second);
+            if(tDist < dist)
+            {
+                dist = tDist;
+                tb = point;
+            }
+            if(heat >= 6)
+            {
+                break;
+            }
+        }
+    }
+    *debug << "tb " << tb.first << "," << tb.second << endl;
+    if (notFound)
+    {
+        //塗り
+        beacon.at(1) = getNuriPoint(start);
+        dashFlag.at(1) = false;
+    }
+    else
+    {
+        //戦い
+        int nx = tb.first;
+        int ny = tb.second;
+        if (myAttackRange.at(1).at(ny * stageHeight + nx))
+        {
+            beacon.at(1) = tb;
+            dashFlag.at(1) = false;
+        }
+        else
+        {
+            int tx = 2;
+            int ty = 2;
+            if (tb.first > start.first)
+            {
+                tx *= -1;
+            }
+            else if (tb.first == start.first)
+            {
+                tb.first = -1;
+            }
+            if (tb.second > start.second)
+            {
+                ty *= -1;
+            }
+            else if (tb.second == start.second)
+            {
+                tb.second = -1;
+            }
+            tb.first += tx;
+            tb.second += ty;
+            *debug << "tb chen " << tb.first << "," << tb.second << endl;
+            beacon.at(1) = tb;
+            int sub = abs(tb.first - start.first) + abs(tb.second - start.second);
+            if (sub > 1)
+            {
+                dashFlag.at(1) = true;
+            }
+            else
+            {
+                dashFlag.at(1) = false;
+            }
+        }
     }
 }
 
@@ -717,7 +894,11 @@ void Analysis::setAttackRange(GameState &gs)
     vector<SamuraiState> enss = {ss->at(3), ss->at(4), ss->at(5)};
     tisFlag = vector<bool>(3, false);
     vector<bool> dummy(3, false);
-    myAttackRange = setKillzone(myss, enss, tisFlag);
+    for (int i = 0; i < 3; ++i)
+    {
+        vector<SamuraiState> tmyss = {myss.at(i)};
+        myAttackRange.at(i) = setKillzone(tmyss, enss, tisFlag);
+    }
     enemyAttackRange = setKillzone(enss, myss, dummy);
 }
 
@@ -792,6 +973,57 @@ void Analysis::setTis(vector<SamuraiState> &aTeam, vector<SamuraiState> &bTeam,
     }
 }
 
+//第２引数の座標にいる時の塗り拡げる用のビーコン設定関数
+pair<int, int> Analysis::getNuriPoint(pair<int, int> point)
+{
+    int nx = point.first / 5;
+    int ny = point.second / 5;
+    pair<int, int> minPoint;
+    int minScore = -1;
+    for (int i = 1; i < 5; ++i)
+    {
+        int nnx = nx + dx[i];
+        int nny = ny + dy[i];
+        if (0 <= nnx && nnx < 3 && 0 <= nny && nny < 3)
+        {
+            int tScore = pressedField.at(nny * 3 + nnx);
+            *debug << "serch nuri b:"  << tScore << " x " << nnx << " y " << nny << endl;
+
+            if (tScore > minScore)
+            {
+                minScore = tScore;
+                minPoint = make_pair(nnx, nny);
+            }
+        }
+    }
+
+    //返り値用に加工する
+    pair<int, int> result = minPoint;
+    *debug << "getNuri:"  << minScore << " x " << result.first << " y " << result.second << endl;
+    result.first *= 3;
+    result.second *= 3;
+    if (result.first == point.first)
+    {
+        int one = 1;
+        if(result.first > 3)
+        {
+            one *= -1;
+        }
+        result.first += one;
+    }
+    if (result.second == point.second)
+    {
+        int one = 1;
+        if(result.second > 3)
+        {
+            one *= -1;
+        }
+        result.second += -1;
+    }
+
+    return result;
+}
+
 pair<int, int> Analysis::getAction(int weapon)
 {
     return beacon.at(weapon);
@@ -817,7 +1049,7 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> poin
         hMap.at(point.second * stageWidth + point.first) += heat;
         looked.at(point.second * stageHeight + point.first) = true;
     }
-    if(heat < 0)
+    if (heat < 0)
     {
         return;
     }
@@ -826,8 +1058,8 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> poin
     {
         seeker = que.front();
         que.pop();
-        //int tHeat = seeker.first - 1;
-        int tHeat = seeker.first / 2;
+        int tHeat = seeker.first - 1;
+        //int tHeat = seeker.first / 2;
         point = seeker.second;
         if (tHeat <= 0)
         {
@@ -839,7 +1071,7 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> poin
             int nx = point.first + dx[i];
             int ny = point.second + dy[i];
             int np = ny * stageHeight + nx;
-            
+
             if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
             {
                 hMap.at(np) += tHeat;
@@ -978,12 +1210,12 @@ int main(int argc, char *argv[])
     {
         gState.readTurnInfo();
         analysis.update(gState);
-        if(debugFlag)
+        if (debugFlag)
         {
             *debug << "Turn : " << gState.getTurn() << endl;
         }
         string command = getCommand(&gState, &analysis);
-        if(debugFlag)
+        if (debugFlag)
         {
             *debug << "================= command : " << command << " =========================" << endl;
         }
