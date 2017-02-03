@@ -503,6 +503,7 @@ void Analysis::update(GameState &gs)
         setBeacon(gs);
         setSpearBeacon(gs);
         setSwordBeacon(gs);
+        setAxeBeacon(gs);
 
         showHeatMap();
         //showEnemyAttackRange();
@@ -887,6 +888,66 @@ void Analysis::setSwordBeacon(GameState &gs)
     }
 }
 
+void Analysis::setAxeBeacon(GameState &gs)
+{
+    SamuraiState *samurai = gs.getSamuraiRef(0,2);
+    pair<int,int> start = make_pair(samurai->x, samurai->y);
+    vector<pair<int,pair<int,int>>> targets = searchHeat(start, 5);
+    bool notFound = true;
+    pair<int,int> tb = make_pair(-1,-1);
+    int heat = 0;
+    int dist = stageWidth * stageHeight;
+    for(pair<int,pair<int,int>> target : targets)
+    {
+        int tHeat = target.first;
+        pair<int,int> tPoint = target.second;
+        int tDist = getDistance(start, tPoint);
+        if(tHeat >=5 && tHeat >= heat && dist >= tDist)
+        {
+            notFound = false;
+            tb = tPoint;
+            heat = tHeat;
+            dist = tDist;
+        }
+    }
+
+    if(notFound)
+    {
+        beacon.at(2) = beacon.at(1) = getNuriPoint(start);
+        dashFlag.at(1) = false;
+    }
+    else
+    {
+        int nx = tb.first;
+        int ny = tb.second;
+        if (myAttackRange.at(2).at(ny * stageHeight + nx))
+        {
+            beacon.at(2) = make_pair(-1,-1);
+        }
+        else
+        {
+            if(nx > samurai->x)
+            {
+                tb.first = 0;
+            }
+            else
+            {
+                tb.first = 14;
+            }
+            if(ny > samurai->y)
+            {
+                tb.second = 0;
+            }
+            else
+            {
+                tb.second = 14;
+            }
+            beacon.at(2) = tb;
+        }
+    }
+
+}
+
 void Analysis::setAttackRange(GameState &gs)
 {
     vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
@@ -1000,8 +1061,10 @@ pair<int, int> Analysis::getNuriPoint(pair<int, int> point)
     //返り値用に加工する
     pair<int, int> result = minPoint;
     *debug << "getNuri:"  << minScore << " x " << result.first << " y " << result.second << endl;
-    result.first *= 3;
-    result.second *= 3;
+    result.first *= 5;
+    result.first += 2;
+    result.second *= 5;
+    result.second += 2;
     if (result.first == point.first)
     {
         int one = 1;

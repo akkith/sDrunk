@@ -148,6 +148,7 @@ class Analysis
   void setBeacon(GameState &gs);
   void setSpearBeacon(GameState &gs);
   void setSwordBeacon(GameState &gs);
+  void setAxeBeacon(GameState &gs);
   void setAttackRange(GameState &gs);
   void calcHeatMap();
   vector<bool> setKillzone(vector<SamuraiState> &aTeam,
