@@ -544,15 +544,7 @@ void Analysis::setPressedField(GameState &gs)
             }
         }
     }
-    for(int i = 0; i < 3*3; ++i)
-    {
-        *debug << pressedField.at(i) << " ";
-        if(i != 0 && i % 3 == 2)
-        {
-            *debug << endl;
-        }
-        
-    }
+    
     for (int x = 0; x < 3; ++x)
     {
         for (int y = 0; y < 3; ++y)
@@ -569,19 +561,20 @@ void Analysis::setPressedField(GameState &gs)
             }
         }
     }
+
+    for (int i = 0; i < 3 * 3; ++i)
+    {
+        pressedField.at(i) += pressedAssist.at(i);
+    }
+
     for(int i = 0; i < 3*3; ++i)
     {
-        *debug << pressedAssist.at(i) << " ";
+        *debug << pressedField.at(i) << " ";
         if(i != 0 && i % 3 == 2)
         {
             *debug << endl;
         }
         
-    }
-
-    for (int i = 0; i < 3 * 3; ++i)
-    {
-        pressedField.at(i) += pressedAssist.at(i);
     }
     
 }
@@ -913,8 +906,8 @@ void Analysis::setAxeBeacon(GameState &gs)
 
     if(notFound)
     {
-        beacon.at(2) = beacon.at(1) = getNuriPoint(start);
-        dashFlag.at(1) = false;
+        beacon.at(2) = getNuriPoint(start);
+        dashFlag.at(2) = false;
     }
     else
     {
@@ -1048,7 +1041,7 @@ pair<int, int> Analysis::getNuriPoint(pair<int, int> point)
         if (0 <= nnx && nnx < 3 && 0 <= nny && nny < 3)
         {
             int tScore = pressedField.at(nny * 3 + nnx);
-            *debug << "serch nuri b:"  << tScore << " x " << nnx << " y " << nny << endl;
+            //*debug << "serch nuri b:"  << tScore << " x " << nnx << " y " << nny << endl;
 
             if (tScore > minScore)
             {
@@ -1060,7 +1053,7 @@ pair<int, int> Analysis::getNuriPoint(pair<int, int> point)
 
     //返り値用に加工する
     pair<int, int> result = minPoint;
-    *debug << "getNuri:"  << minScore << " x " << result.first << " y " << result.second << endl;
+    //*debug << "getNuri:"  << minScore << " x " << result.first << " y " << result.second << endl;
     result.first *= 5;
     result.first += 2;
     result.second *= 5;
@@ -1068,7 +1061,7 @@ pair<int, int> Analysis::getNuriPoint(pair<int, int> point)
     if (result.first == point.first)
     {
         int one = 1;
-        if(result.first > 3)
+        if(result.first > 7)
         {
             one *= -1;
         }
@@ -1077,7 +1070,7 @@ pair<int, int> Analysis::getNuriPoint(pair<int, int> point)
     if (result.second == point.second)
     {
         int one = 1;
-        if(result.second > 3)
+        if(result.second > 7)
         {
             one *= -1;
         }
@@ -1102,13 +1095,11 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> poin
     pair<int, int> point;
     pair<int, pair<int, int>> seeker;
     vector<bool> looked(stageHeight * stageHeight, false);
-    queue<pair<int, pair<int, int>>> que;
+    
 
     for (pair<int, int> p : points)
     {
         point = p;
-        seeker = make_pair(heat, point);
-        que.push(seeker);
         hMap.at(point.second * stageWidth + point.first) += heat;
         looked.at(point.second * stageHeight + point.first) = true;
     }
@@ -1117,33 +1108,88 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> poin
         return;
     }
 
-    while (!que.empty())
+    for(pair<int,int> p : points)
     {
-        seeker = que.front();
-        que.pop();
-        int tHeat = seeker.first - 1;
-        //int tHeat = seeker.first / 2;
-        point = seeker.second;
-        if (tHeat <= 0)
+        queue<pair<int, pair<int, int>>> que;
+        seeker = make_pair(heat, p);
+        que.push(seeker);
+        vector<bool> tlooked = looked;
+        while (!que.empty())
         {
-            continue;
-        }
-
-        for (int i = 1; i < 5; ++i)
-        {
-            int nx = point.first + dx[i];
-            int ny = point.second + dy[i];
-            int np = ny * stageHeight + nx;
-
-            if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
+            seeker = que.front();
+            que.pop();
+            //int tHeat = seeker.first - 1;
+            int tHeat = seeker.first / 2;
+            point = seeker.second;
+            if (tHeat <= 0)
             {
-                hMap.at(np) += tHeat;
-                looked.at(np) = true;
-                que.push(make_pair(tHeat, make_pair(nx, ny)));
+                continue;
+            }
+
+            for (int i = 1; i < 5; ++i)
+            {
+                int nx = point.first + dx[i];
+                int ny = point.second + dy[i];
+                int np = ny * stageHeight + nx;
+
+                if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !tlooked.at(np))
+                {
+                    hMap.at(np) += tHeat;
+                    tlooked.at(np) = true;
+                    que.push(make_pair(tHeat, make_pair(nx, ny)));
+                }
             }
         }
     }
 }
+
+// void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> points)
+// {
+//     pair<int, int> point;
+//     pair<int, pair<int, int>> seeker;
+//     vector<bool> looked(stageHeight * stageHeight, false);
+//     queue<pair<int, pair<int, int>>> que;
+
+//     for (pair<int, int> p : points)
+//     {
+//         point = p;
+//         seeker = make_pair(heat, point);
+//         que.push(seeker);
+//         hMap.at(point.second * stageWidth + point.first) += heat;
+//         looked.at(point.second * stageHeight + point.first) = true;
+//     }
+//     if (heat < 0)
+//     {
+//         return;
+//     }
+
+//     while (!que.empty())
+//     {
+//         seeker = que.front();
+//         que.pop();
+//         int tHeat = seeker.first - 1;
+//         //int tHeat = seeker.first / 2;
+//         point = seeker.second;
+//         if (tHeat <= 0)
+//         {
+//             continue;
+//         }
+
+//         for (int i = 1; i < 5; ++i)
+//         {
+//             int nx = point.first + dx[i];
+//             int ny = point.second + dy[i];
+//             int np = ny * stageHeight + nx;
+
+//             if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
+//             {
+//                 hMap.at(np) += tHeat;
+//                 looked.at(np) = true;
+//                 que.push(make_pair(tHeat, make_pair(nx, ny)));
+//             }
+//         }
+//     }
+// }
 
 vector<pair<int, pair<int, int>>> Analysis::searchHeat(pair<int, int> p, int range)
 {
