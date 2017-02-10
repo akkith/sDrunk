@@ -499,7 +499,6 @@ void Analysis::update(GameState &gs)
     {
         setLookedField(gs);
         setPressedField(gs);
-        *debug << "a" << endl;
         setHeatMap(beforeState, gs);
         setAttackRange(gs);
         setBeacon(gs);
@@ -632,10 +631,8 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
             int a = afterMap->at(p);
             if (b != a && 3 <= a && a <= 5)
             {
-                //dropHeat(hMap, 2, x, y);
                 int weapon = a - 3;
                 points.at(weapon).push_back(make_pair(x, y));
-                //dropHeat(beforeHeatMaps.at(weapon), 2, x, y);
             }
         }
     }
@@ -676,9 +673,13 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         }
         else if (samurai.hidden == 1 && bSamurai.hidden == 1)
         {
-            if (lostedFlag.at(samurai.weapon) > 3)
+            if (lostedFlag.at(samurai.weapon) > 9)
             {
                 clearFlag = true;
+            }
+            else
+            {
+                lostedFlag.at(samurai.weapon) += 1;
             }
              x = -1;
              y = -1;
@@ -706,6 +707,7 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
         {
             vector<int> thMap(stageHeight * stageWidth, 0);
             beforeHeatMaps.at(samurai.weapon + 3) = thMap;
+            lostedFlag.at(samurai.weapon) = 0;
             clearFlag = false;
         }
     }
