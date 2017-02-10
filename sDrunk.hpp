@@ -129,6 +129,8 @@ class Analysis
   vector< pair<int,int> > beacon;
   //目標になる熱量
   vector<int> targetHeat;
+  //敵を完全に見失ったかどうか
+  vector<int> lostedFlag;
   //移動優先状態
   vector<bool> dashFlag;
   //射程範囲内に敵がいるか否か

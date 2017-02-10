@@ -91,6 +91,17 @@ class ScoreBoard
         return deadPenalty;
     }
 
+    void shiftFinish()
+    {
+        for(int i = 0; i < 3; ++i)
+        {
+            mapValue[i] = 10000;
+            //samuraiValue[i] = 2000;
+            //hiddingValue[i] = 1;
+            //moveValue[i] = 6;
+        }  
+    }
+
     //デバッグ用
     void showScore() const
     {

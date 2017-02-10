@@ -145,10 +145,15 @@ bool GameSearch::checkAction(int team, int weapon, int n)
     return isValid;
 }
 
-GameSearch GameSearch::doAction(int team, int weapon, int n, Analysis *an)
+GameSearch GameSearch::doAction(int team, int weapon, int n, Analysis *an, int turn)
 {
     GameSearch nextSearch = *this;
     ScoreBoard sb;
+    if(turn >= 90)
+    {
+        sb.shiftFinish();
+        //*debug << "shift final" << endl;
+    }
     //nextSearch.gs.moveSamurai(team, weapon, n);
     simulateAction(nextSearch.getGameStateRef(), team, weapon, n, beaconPoint.at(weapon), &sb, an);
     //double sc = evaluate(&(nextSearch.gs));
@@ -200,7 +205,8 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon, Analysis
     {
         if (gSearch.checkCost(9) && gSearch.checkAction(0, weapon, 9))
         {
-            GameSearch newGSearch = gSearch.doAction(0, weapon, 9, an);
+            int turn = gSearch.getGameStateRef()->getTurn();
+            GameSearch newGSearch = gSearch.doAction(0, weapon, 9, an, turn);
             result.push_back(newGSearch);
             states->push(newGSearch);
         }
@@ -224,8 +230,9 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon, Analysis
             //*debug << "weapon : " << weapon << " n : " << n << endl;
             if (gSearch.checkCost(n) && gSearch.checkAction(0, weapon, n))
             {
+                int turn = gSearch.getGameStateRef()->getTurn();
                 //*debug << "weapon : " << weapon << " action : " << n << endl;
-                GameSearch newGSearch = gSearch.doAction(0, weapon, n, an);
+                GameSearch newGSearch = gSearch.doAction(0, weapon, n, an, turn);
                 result.push_back(newGSearch);
                 //newGSearch.showCommand();
                 states->push(newGSearch);
@@ -241,7 +248,8 @@ vector<GameSearch> createPattern(queue<GameSearch> *states, int weapon, Analysis
         {
             if (tgs.checkCost(9) && tgs.checkAction(0, weapon, 9))
             {
-                GameSearch newGSearch = tgs.doAction(0, weapon, 9, an);
+                int turn = gSearch.getGameStateRef()->getTurn();
+                GameSearch newGSearch = tgs.doAction(0, weapon, 9, an, turn);
                 hiddenState.push_back(newGSearch);
                 //states->push(newGSearch);
             }
