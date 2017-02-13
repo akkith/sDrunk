@@ -153,6 +153,7 @@ class Analysis
   void setAxeBeacon(GameState &gs);
   void setAttackRange(GameState &gs);
   void calcHeatMap();
+  void setHiddenEnemy(GameState &gs);
   vector<bool> setKillzone(vector<SamuraiState> &aTeam,
                            vector<SamuraiState> &bTeam,
                            vector<bool> &tis);
@@ -164,6 +165,7 @@ class Analysis
   pair<int, int> getAction(int weapon);
   bool getDashFlag(int weapon);
   void dropHeat(vector<int> &hMap,int heat, vector<pair<int,int>> points);
+  void reviseHeatMap(vector<int> &hMap, pair<int,int> lostPosition, int weapon, vector<pair<int,int>> points);
   vector<pair<int,pair<int,int>>> searchHeat(pair<int,int> p, int range);
   bool checkEARange(int p);
 

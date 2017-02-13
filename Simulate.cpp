@@ -117,7 +117,6 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb,
         rotate(action - 1, ox[samurai->weapon][i], oy[samurai->weapon][i], attackX, attackY);
         attackX += samuraiX;
         attackY += samuraiY;
-        //攻撃座標が拠点でない場合
         bool isHome = false;
         //攻撃座標に敵がいた
         //bool onEnemy = false;
@@ -128,6 +127,8 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb,
                 SamuraiState *ss = gs->getSamuraiRef(team, weapon);
                 if (team == 1)
                 {
+                    //攻撃座標が拠点でない場合
+                    //isHome = false;
                     if (attackX == ss->homeX && attackY == ss->homeY)
                     {
                         isHome |= true;
@@ -149,10 +150,10 @@ void doAttack(GameState *gs, SamuraiState *samurai, int action, ScoreBoard * sb,
             {
                 ++nuriCnt;
                 int heat = an->getHeat(attackX, attackY);
-                // if(heat >= 5)
-                // {
-                //     koCnt += 0.5;
-                // }
+                if(heat >= 6)
+                {
+                     nuriCnt += 1;
+                }
                 etcScore += heat;
             }
             field->at(attackY * stageHeight + attackX) = samurai->weapon;  

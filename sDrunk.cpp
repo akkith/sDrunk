@@ -480,11 +480,13 @@ Analysis::Analysis()
         beacon.push_back(make_pair(14, 3));
         beacon.push_back(make_pair(7, 7));
     }
-
-    dashFlag.push_back(true);
+    //暫定的になしにしてみる
+    //dashFlag.push_back(true);
+    dashFlag.push_back(false);
     targetHeat.push_back(5);
 
-    dashFlag.push_back(true);
+    //dashFlag.push_back(true);
+    dashFlag.push_back(false);
     targetHeat.push_back(3);
 
     dashFlag.push_back(false);
@@ -500,15 +502,13 @@ void Analysis::update(GameState &gs)
         setLookedField(gs);
         setPressedField(gs);
         setHeatMap(beforeState, gs);
+        //setHiddenEnemy(gs);
         setAttackRange(gs);
         setBeacon(gs);
-        //setSpearBeacon(gs);
-        //setSwordBeacon(gs);
-        //setAxeBeacon(gs);
 
         showHeatMap();
-        //showEnemyAttackRange();
-        //showTisFlag();
+        showEnemyAttackRange();
+        showTisFlag();
         showBeacon();
     }
     beforeState = gs;
@@ -650,7 +650,6 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
     vector<SamuraiState> *beforeSamurai = before.getSamuraiStatesRef();
     bool lostFlag = false;
     bool clearFlag = false;
-
     for (int i = 3; i < 6; ++i)
     {
         int x, y, samuraiHeat;
@@ -699,6 +698,7 @@ void Analysis::setHeatMap(GameState &before, GameState &after)
             if (lostFlag)
             {
                 dropHeat(thMap, -1, tp);
+                reviseHeatMap(thMap, tp.at(0), samurai.weapon, points.at(samurai.weapon));
                 lostFlag = false;
             }
             beforeHeatMaps.at(samurai.weapon + 3) = thMap;
@@ -773,8 +773,8 @@ void Analysis::setSpearBeacon(GameState &gs)
             int tdist = getDistance(start, point);
             bool isNeer = tdist < dist;
             bool canAttack = myAttackRange.at(0).at(point.second * stageHeight + point.first);
-            int color = gs.getFieldColor(point.second * stageHeight + point.first);
-            if ((isNeer || canAttack) && heat >= beaconHeat && 3 <= color)
+            //int color = gs.getFieldColor(point.second * stageHeight + point.first);
+            if ((isNeer || canAttack) && heat >= beaconHeat)
             {
                 dist = tdist;
                 beaconHeat = heat;
@@ -817,7 +817,7 @@ void Analysis::setSwordBeacon(GameState &gs)
     {
         int heat = target.first;
         pair<int, int> point = target.second;
-        if (heat >= 5 && lookedField.at(point.second * stageHeight + point.first) > 2)
+        if (heat >= 5 && lookedField.at(point.second * stageHeight + point.first) > 5)
         {
             notFound = false;
             int tDist = abs(start.first - point.first) + abs(start.second - point.second);
@@ -832,7 +832,7 @@ void Analysis::setSwordBeacon(GameState &gs)
             }
         }
     }
-    *debug << "tb " << tb.first << "," << tb.second << endl;
+    
     if (notFound)
     {
         //塗り
@@ -859,7 +859,7 @@ void Analysis::setSwordBeacon(GameState &gs)
             }
             else if (tb.first == start.first)
             {
-                tb.first = -1;
+                //tb.first = -1;
             }
             if (tb.second > start.second)
             {
@@ -867,11 +867,11 @@ void Analysis::setSwordBeacon(GameState &gs)
             }
             else if (tb.second == start.second)
             {
-                tb.second = -1;
+                //tb.second = -1;
             }
             tb.first += tx;
             tb.second += ty;
-            *debug << "tb chen " << tb.first << "," << tb.second << endl;
+            
             beacon.at(1) = tb;
             int sub = abs(tb.first - start.first) + abs(tb.second - start.second);
             if (sub > 1)
@@ -900,7 +900,7 @@ void Analysis::setAxeBeacon(GameState &gs)
         int tHeat = target.first;
         pair<int, int> tPoint = target.second;
         int tDist = getDistance(start, tPoint);
-        if (tHeat >= 5 && tHeat >= heat && dist >= tDist)
+        if (tHeat >= 5 && dist >= tDist && tHeat >= heat)
         {
             notFound = false;
             tb = tPoint;
@@ -921,26 +921,49 @@ void Analysis::setAxeBeacon(GameState &gs)
         if (myAttackRange.at(2).at(ny * stageHeight + nx))
         {
             beacon.at(2) = make_pair(-1, -1);
+            dashFlag.at(2) = false;
         }
         else
         {
-            if (nx > samurai->x)
+            int tx = 2;
+            int ty = 2;
+            if (tb.first > start.first)
             {
-                tb.first = 0;
+                tx *= -1;
             }
-            else
+            if (tb.second > start.second)
             {
-                tb.first = 14;
+                ty *= -1;
             }
-            if (ny > samurai->y)
-            {
-                tb.second = 0;
-            }
-            else
-            {
-                tb.second = 14;
-            }
+            tb.first += tx;
+            tb.second += ty;
             beacon.at(2) = tb;
+            int sub = abs(tb.first - start.first) + abs(tb.second - start.second);
+            if (sub > 1)
+            {
+                dashFlag.at(2) = true;
+            }
+            else
+            {
+                dashFlag.at(2) = false;
+            }
+            // if (nx > samurai->x)
+            // {
+            //     tb.first = 0;
+            // }
+            // else
+            // {
+            //     tb.first = 14;
+            // }
+            // if (ny > samurai->y)
+            // {
+            //     tb.second = 0;
+            // }
+            // else
+            // {
+            //     tb.second = 14;
+            // }
+            // beacon.at(2) = tb;
         }
     }
 }
@@ -972,12 +995,47 @@ void Analysis::calcHeatMap()
     }
 }
 
+void Analysis::setHiddenEnemy(GameState &gs)
+{
+    vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
+    for(int i = 3; i < 6; ++i)
+    {
+        SamuraiState samurai = ss->at(i);
+        if(samurai.hidden == 1)
+        {
+            int weapon = samurai.weapon;
+            SamuraiState *bSamurai = beforeState.getSamuraiRef(1,weapon);
+            int bx = bSamurai->x;
+            int by = bSamurai->y;
+            if(bSamurai->hidden == 0)
+            {
+                for(int i = 1; i < 5; ++i)
+                {
+                    int nx = bx + dx[i];
+                    int ny = by + dy[i];
+                    int np = ny * stageHeight + nx;
+                    if(heatMap.at(np) >= 5)
+                    {
+                        gs.getSamuraiStatesRef()->at(i).x = nx;
+                        gs.getSamuraiStatesRef()->at(i).y = ny;
+                        //ss->at(i).hidden = 0;
+                    }   
+                }
+            }
+        }
+    }
+    for(SamuraiState s : *ss)
+    {
+        *debug << "w:" << s.weapon << " x:" << s.x << " y;" <<s.y <<endl;
+    }
+}
+
 vector<bool> Analysis::setKillzone(vector<SamuraiState> &aTeam,
                                    vector<SamuraiState> &bTeam,
                                    vector<bool> &tis)
 {
     vector<bool> killzone(stageHeight * stageWidth, false);
-    //vector<SamuraiState> *ss = gs.getSamuraiStatesRef();
+    
     for (SamuraiState samurai : aTeam)
     {
         int w = samurai.weapon;
@@ -1146,54 +1204,62 @@ void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> poin
         }
     }
 }
-
-// void Analysis::dropHeat(vector<int> &hMap, int heat, vector<pair<int, int>> points)
-// {
-//     pair<int, int> point;
-//     pair<int, pair<int, int>> seeker;
-//     vector<bool> looked(stageHeight * stageHeight, false);
-//     queue<pair<int, pair<int, int>>> que;
-
-//     for (pair<int, int> p : points)
-//     {
-//         point = p;
-//         seeker = make_pair(heat, point);
-//         que.push(seeker);
-//         hMap.at(point.second * stageWidth + point.first) += heat;
-//         looked.at(point.second * stageHeight + point.first) = true;
-//     }
-//     if (heat < 0)
-//     {
-//         return;
-//     }
-
-//     while (!que.empty())
-//     {
-//         seeker = que.front();
-//         que.pop();
-//         int tHeat = seeker.first - 1;
-//         //int tHeat = seeker.first / 2;
-//         point = seeker.second;
-//         if (tHeat <= 0)
-//         {
-//             continue;
-//         }
-
-//         for (int i = 1; i < 5; ++i)
-//         {
-//             int nx = point.first + dx[i];
-//             int ny = point.second + dy[i];
-//             int np = ny * stageHeight + nx;
-
-//             if (0 <= nx && nx < stageWidth && 0 <= ny && ny < stageHeight && !looked.at(np))
-//             {
-//                 hMap.at(np) += tHeat;
-//                 looked.at(np) = true;
-//                 que.push(make_pair(tHeat, make_pair(nx, ny)));
-//             }
-//         }
-//     }
-// }
+//移動＋潜伏＋移動を行った敵の位置を見つける
+void Analysis::reviseHeatMap(vector<int> &hMap,pair<int,int> lostPosition, int weapon, vector<pair<int,int>> points)
+{
+    int maxDist = 0;
+    int moveD = 0;
+    for(pair<int,int> point : points)
+    {
+        int tDist = getDistance(lostPosition, point);
+        if(maxDist <= tDist)
+        {
+            maxDist = tDist;
+            int tx = point.first - lostPosition.first;
+            int ty = point.second - lostPosition.second;
+            if(tx > ty && abs(tx) > abs(ty))
+            {
+                moveD = 2;
+            }
+            else if(tx > ty && abs(tx) < abs(ty))
+            {
+                moveD = 3;
+            }
+            else if(tx < ty && abs(tx) > abs(ty))
+            {
+                moveD = 4;
+            }
+            else
+            {
+                moveD = 1;
+            }
+            if(tDist >= 3 && (tx == 0 || ty == 0))
+            {
+                break;
+            } 
+        }
+    }
+    int checkLine = 0;
+    switch(weapon)
+    {
+        case 0:
+            checkLine = 5;
+        break;
+        case 1:
+            checkLine = 3;
+        break;
+        case 2:
+            checkLine = 3;
+        break;
+    }
+    if(maxDist < checkLine)
+    {
+        return;
+    }
+    int nx = lostPosition.first + dx[moveD];
+    int ny = lostPosition.second + dy[moveD];
+    hMap.at(ny * stageHeight + nx) += 3;
+}
 
 vector<pair<int, pair<int, int>>> Analysis::searchHeat(pair<int, int> p, int range)
 {
